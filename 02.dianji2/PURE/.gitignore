@@ -1,0 +1,8 @@
+/Output/
+/Listing/
+*.TMP
+*.save-failed
+*.hex
+*.bin
+*.cbp
+*.layout

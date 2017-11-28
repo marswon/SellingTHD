@@ -1,0 +1,28 @@
+### BSP
+     外设、组件、总线、协议等定义和驱动
+
+### PURE
+     不带os使用库函数版本Project
+
+##### 升级说明
+	STM32F103VC:
+		正常情况下:
+		IROM1: 0x8000000/0x40000
+		IRAM1: 0x20000000/0xC000
+
+		需要IAP时:
+		IROM1: 0x8002000/0xC800
+		IRAM1: 0x20000000/0xC000
+		增加:
+		SCB->VTOR = FLASH_BASE | 0x2000;
+	
+	STM32F103R8:
+		正常情况下:
+		IROM1: 0x8000000/0x10000
+		IRAM1: 0x20000000/0x5000
+
+		需要IAP时:
+		IROM1: 0x8002000/0xC800
+		IRAM1: 0x20000000/0x5000
+		增加:
+		SCB->VTOR = FLASH_BASE | 0x2000;
