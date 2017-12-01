@@ -93,21 +93,6 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define USARTCMD_ANDROID_ZHUKONG_GetDianjiVer           0x014B
 #define USARTCMD_ZHUKONG_DIANJI_GetDianjiVer            0x024B
 
-//准备升级对射
-#define USARTCMD_ANDROID_ZHUKONG_WillUpdateDuishe       0x015B
-#define USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe        0x025B
-
-//开始升级对射
-#define USARTCMD_ANDROID_ZHUKONG_StartUpdateDuishe      0x015F
-#define USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe       0x025F
-
-//停止升级对射
-#define USARTCMD_ANDROID_ZHUKONG_StopUpdateDuishe       0x015C
-#define USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe        0x025C
-
-//读取对射版本
-#define USARTCMD_ANDROID_ZHUKONG_GetDuisheVer           0x014C
-#define USARTCMD_ZHUKONG_DIANJI_GetDuisheVer            0x024C
 
 //结束升级主控
 #define USARTCMD_ANDROID_ZHUKONG_StopUpdateZhukong      0x014E

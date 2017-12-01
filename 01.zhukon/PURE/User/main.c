@@ -85,7 +85,8 @@ int main(void)
         }
     }
 }
-
+//功能：主控板按键扫描函数
+//说明：主控板按键长按，会取货第2行第1列，用于工厂检测
 void KEY_Scan(u8 mode)
 {
     static u8 key_up = 1;

@@ -19,8 +19,8 @@ typedef enum
 
 /*****************************************************/
 #define   Version_Year       "47"       // year
-#define   Version_Month      "11"      // month
-#define   Version_Day        "20"      // day
+#define   Version_Month      "12"      // month
+#define   Version_Day        "01"      // day
 /*****************************************************/
 //UCOS编译标志位，使用UCOS需要编译对应程序，值为1；不使用UCOS不需要编译对应程序，值为0
 #define SYSTEM_SUPPORT_OS       0
@@ -147,13 +147,9 @@ typedef enum
 //掉货检测引脚，常态（接收到光）检测到低电平；掉货：检测到高电平
 #define PUTThing  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_9)
 //红外对射使能引脚，常态下，红外低电平不使能；高电平使能红外发射
-#define Enable_HongWai  PEout(0)
+#define Enable_duishe()     (PEout(0) = 1)
+#define Disable_duishe()    (PEout(0) = 0)
 
-/**********************************************************************************************/
-
-//#define TIME_TO_DOOR   800     //升降电机从下限位上升到堵住货柜门时间
-
-/**********************************************************************************************/
 
 #endif
 

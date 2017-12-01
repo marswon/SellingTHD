@@ -7,14 +7,8 @@ u16 UsartRptr = 0;
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
 
-/*
-*********************************************************************************************************
-*   函 数 名: USART1_IRQHandler
-*   功能说明: USART1中断处理函数.
-*   形    参:  无
-*   返 回 值: 无
-*********************************************************************************************************
-*/
+//函数名: USART1_IRQHandler
+//功能说明: USART1中断处理函数,串口1接GPRS
 #if USART1_CONFIG_ENABLED > 0
 void USART1_IRQHandler(void)
 {
@@ -27,7 +21,6 @@ void USART1_IRQHandler(void)
     {
         nTemp = USART_ReceiveData(USART1);
         USART_ClearITPendingBit(USART1, USART_IT_RXNE); //clear flag
-        /************************************************/
         //USART_BufferWrite(nTemp);
     }
 
@@ -43,6 +36,7 @@ void USART1_IRQHandler(void)
 }
 #endif
 
+//说明：串口2接PC调试
 #if USART2_CONFIG_ENABLED > 0
 void USART2_IRQHandler(void)
 {
@@ -71,6 +65,7 @@ void USART2_IRQHandler(void)
 }
 #endif
 
+//说明：串口3接安卓板
 #if USART3_CONFIG_ENABLED > 0
 void USART3_IRQHandler(void)
 {
@@ -99,6 +94,7 @@ void USART3_IRQHandler(void)
 }
 #endif
 
+//说明：串口4接电机板
 #if UART4_CONFIG_ENABLED > 0
 void UART4_IRQHandler(void)
 {
@@ -128,6 +124,7 @@ void UART4_IRQHandler(void)
 }
 #endif
 
+//说明：串口5接温控
 #if UART5_CONFIG_ENABLED > 0
 void UART5_IRQHandler(void)
 {
@@ -301,7 +298,6 @@ u8 USART_BufferRead(u8 *data)
     }
 
     *data = UsartBuffer[UsartRptr];
-    //UsartRptr++;
     UsartRptr = (UsartRptr + 1) % USART_BUFFER_LEN; //保证读位置值不溢出
     return 1;
 }
@@ -315,8 +311,6 @@ u16 USART_BufferLength(void)
 void USART_BufferWrite(u8 ntemp)
 {
     //char strtmp[32] = {0};
-
-    //if(UsartWptr == (UsartRptr - 1))
     if((UsartWptr + 1) % USART_BUFFER_LEN == UsartRptr) // full
     {
         return;
@@ -400,20 +394,12 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1]);
             USART_DEBUG(strtmp);
         }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 电机版本
+        else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {
             char strstr[10] = {0};
             sprintf(strstr, "%s", Dat);
             Send_CMD_DAT(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_GetDianjiVer), LBYTE(USARTCMD_ANDROID_ZHUKONG_GetDianjiVer), strstr, 7);
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetDianjiVer:%04X, %s\r\n", USARTCMD_ANDROID_ZHUKONG_GetDianjiVer, strstr);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDuisheVer) // 对射版本
-        {
-            char strstr[10] = {0};
-            sprintf(strstr, "%s", Dat);
-            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_GetDuisheVer), LBYTE(USARTCMD_ANDROID_ZHUKONG_GetDuisheVer), strstr, 7);
-            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetDuisheVer:%04X, %s\r\n", USARTCMD_ANDROID_ZHUKONG_GetDuisheVer, strstr);
             USART_DEBUG(strtmp);
         }
     }
@@ -489,37 +475,6 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_StopUpdateDianji: %04X\r\n", USARTCMD_ANDROID_ZHUKONG_StopUpdateDianji);
             USART_DEBUG(strtmp);
         }
-        else if(Data == USARTCMD_ANDROID_ZHUKONG_WillUpdateDuishe) //准备升级对射
-        {
-            Send_CMD(UART4, HBYTE(USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe), LBYTE(USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe) //返回准备升级对射
-        {
-            Send_CMD(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_WillUpdateDuishe), LBYTE(USARTCMD_ANDROID_ZHUKONG_WillUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_WillUpdateDuishe: %04X\r\n", USARTCMD_ANDROID_ZHUKONG_WillUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ANDROID_ZHUKONG_StartUpdateDuishe) //开始升级对射
-        {
-            Send_CMD(UART4, HBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe), LBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe) //返回开始升级对射
-        {
-            start_flash_flag = 1;
-            Send_CMD(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_StartUpdateDuishe), LBYTE(USARTCMD_ANDROID_ZHUKONG_StartUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_StartUpdateDuishe: %04X\r\n", USARTCMD_ANDROID_ZHUKONG_StartUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe) //返回结束升级对射
-        {
-            Send_CMD(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_StopUpdateDuishe), LBYTE(USARTCMD_ANDROID_ZHUKONG_StopUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_StopUpdateDuishe: %04X\r\n", USARTCMD_ANDROID_ZHUKONG_StopUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
         else if(Data == USARTCMD_ANDROID_ZHUKONG_GetZhukongVer) // 主控版本
         {
             char strstr[10] = {0};
@@ -532,12 +487,6 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         {
             Send_CMD(UART4, HBYTE(USARTCMD_ZHUKONG_DIANJI_GetDianjiVer), LBYTE(USARTCMD_ZHUKONG_DIANJI_GetDianjiVer));
             sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_GetDianjiVer: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_GetDianjiVer);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ANDROID_ZHUKONG_GetDuisheVer) // 获取对射版本
-        {
-            Send_CMD(UART4, HBYTE(USARTCMD_ZHUKONG_DIANJI_GetDuisheVer), LBYTE(USARTCMD_ZHUKONG_DIANJI_GetDuisheVer));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_GetDuisheVer: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_GetDuisheVer);
             USART_DEBUG(strtmp);
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_DIANJI1VOLT) // 升降电机+门电机电压超压
@@ -560,6 +509,10 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             }
 
             USART_DEBUG("debug\r\n");
+        }
+        else if(Data == 0x0118) // 关闭打印
+        {
+            flag_enable_debug = FALSE;
         }
     }
 }

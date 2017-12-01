@@ -22,8 +22,8 @@
 #include "bsp_delay.h"
 
 #define   Version_Year       "27"       // year
-#define   Version_Month      "10"      // month
-#define   Version_Day        "21"      // day
+#define   Version_Month      "12"      // month
+#define   Version_Day        "01"      // day
 
 #define HBYTE(a)               ((unsigned char)(((unsigned short)(a) >> 8) & 0xFF))
 #define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))

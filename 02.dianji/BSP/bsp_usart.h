@@ -14,54 +14,25 @@
 #define ZHUKON_DIANJI_NUMb1   0x0211//取货x行y列
 #define DIANJI_ZHUKON_NUMb1   0x023A//出货成功
 #define DIANJI_ZHUKON_NUMb2   0x023B//出货失败
-#define DIANJI_ZHUKON_NUMb3   0x023C//取货失败
-#define DIANJI_ZHUKON_NUMb4   0x023D//取货成功
-#define DIANJI_ZHUKON_NUMb5   0x023E//层反馈异常
+//#define DIANJI_ZHUKON_NUMb3   0x023C//取货失败
+//#define DIANJI_ZHUKON_NUMb4   0x023D//取货成功
+//#define DIANJI_ZHUKON_NUMb5   0x023E//层反馈异常
 #define DIANJI_ZHUKON_NUMb6   0x023F//货道检测异常
 
-#define DIANJI_DUISHE_NUMb4   0x035D//开启掉货检测功能
-#define DIANJI_DUISHE_NUMb5   0x035E//关闭掉货检测功能
-#define DIANJI_DUISHE_NUMb6   0x035F//收到层反馈、对射板红灯亮
-#define DUISHE_DIANJI_NUMb1   0x0301//第一层反馈
-#define DUISHE_DIANJI_NUMb2   0x0302//第二层反馈
-#define DUISHE_DIANJI_NUMb3   0x0303//第三层反馈
-#define DUISHE_DIANJI_NUMb4   0x0304//第四层反馈
-#define DUISHE_DIANJI_NUMb5   0x0305//第五层反馈
-#define DUISHE_DIANJI_NUMb6   0x0306//第六层反馈
-#define DUISHE_DIANJI_NUMb7   0x0307//第七层反馈
-#define DUISHE_DIANJI_NUMb8   0x0308//第八层反馈
-#define DUISHE_DIANJI_NUMb9   0x0309//第九层反馈
-#define DUISHE_DIANJI_NUMb10  0x030A//第十层反馈
-#define DUISHE_DIANJI_NUMb15   0x030f//检测到货物
 
 //准备升级电机板
 #define USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji        0x024F
-
+//开始升级电机板
+#define USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji       0x025E
 //结束升级电机板
-#define USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji       0x025A
+#define USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji        0x025A
+//电机板复位
+#define USARTCMD_ZHUKONG_DIANJI_ResetDianji              0x0213
 
 //获取电机板软件版本
 #define USARTCMD_ZHUKONG_DIANJI_GetDianjiVer            0x024B
-
-//升级对射板
-#define USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe        0x025B
-#define USARTCMD_DIANJI_DUISHE_WillUpdateDuishe         0x035B
-
-//开始升级对射板
-#define USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe       0x025F
-#define USARTCMD_DIANJI_DUISHE_StartUpdateDuishe        0x035F
-
-//电机板->对射板，停止升级对射板
-#define USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe        0x025C
-#define USARTCMD_DIANJI_DUISHE_StopUpdateDuishe         0x035C
-
-//获取对射板版本
-#define USARTCMD_ZHUKONG_DIANJI_GetDuisheVer            0x024C
-#define USARTCMD_DIANJI_DUISHE_GetDuisheVer             0x034C
-
 //主控板->电机板，ADC检测门电机和升降电机，电压超值
 #define USARTCMD_ZHUKONG_DIANJI_DIANJI1VOLT             0x0215
-
 //主控板->电机板，ADC检测货道电机，电压超值
 #define USARTCMD_ZHUKONG_DIANJI_DIANJI2VOLT             0x0216
 /**********************************************/

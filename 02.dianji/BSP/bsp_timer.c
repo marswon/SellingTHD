@@ -2,11 +2,11 @@
 
 
 //u16 num_chuhuo_timer3 = 0;         //货物出货超时,计时位，用在TIMER3中断程序
-//u8 num_quehuo_timer3 = 0;          // 30ms 取货检测
+//u8 num_quehuo_timer3 = 0;          // 取货检测纪录
 //u16 num_adc1_timer3 = 0;          //ADC1检测检测计时位，用在TIMER3中断程序
 //u16 num_adc2_timer3 = 0;          //ADC2检测检测计时位，用在TIMER3中断程序
 u16 num_led_time = 0;       //控制LED0调试灯闪烁的节奏，用在定时器TIMER3中断服务程序中
-
+//extern bool TIM3_enable_quhuo;      //用于定时器3中取货检测，每隔500ms检测一次
 
 /*************************************************
 功能：通用定时器TIM2初始化函数
@@ -73,7 +73,7 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 
 /**********************************************************************************************************
 功能：定时器3中断服务程序
-说明：num_chuhuo_timer3为货物出货超时计时位，用在TIMER3中断程序，定时器每次计时1ms，取货计时15s
+说明：num_chuhuo_timer3为货物出货超时计时位，用在TIMER3中断程序，定时器每次计时100ms，取货计时15s
 ***********************************************************************************************************/
 void TIM3_IRQHandler(void)   //TIM3中断
 {
@@ -85,21 +85,44 @@ void TIM3_IRQHandler(void)   //TIM3中断
     num_led_time++;
 
     //实现LED0调试灯的闪烁
-    if(num_led_time > 1000)         //调试灯1s亮，1s灭，指示程序运行
+    if(num_led_time > 10)         //调试灯1s亮，1s灭，指示程序运行
     {
         num_led_time = 0;
-
-        if(LED0)
-        {
-            LED0 = 0;
-        }
-        else
-        {
-            LED0 = 1;
-        }
-
+        LED0 = ~LED0;       //闪烁
         //Get_motor_voltage(1);       //每隔1000ms检测一次，打印结果。为了打印信息
     }
+
+    //每隔100ms检测一次，取货状态
+//    if(TIM3_enable_quhuo == 1)
+//    {
+//        u8 i = 0, j = 0;
+//        if(PUTThing == 0)       //检测到货物取走，低电平
+//        {
+//            i++;
+//        }
+//        else
+//        {
+//            i = 0;
+//        }
+//        if(i >= 3)      //连续3次检测到货物取走才算检测取货成功
+//        {
+//            Disable_duishe();       //关闭红外掉货检测
+//            TIM3_enable_quhuo = 0;  //关闭TIM3中100ms定时取货检测
+//            //电机->主控，取货成功
+//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb4), LBYTE(DIANJI_ZHUKON_NUMb4));
+//            //PC调试
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb4), LBYTE(DIANJI_ZHUKON_NUMb4));
+//        }
+//        j++;        //检测总次数纪录，达到设定值退出
+//        if(j >= 50)         //达到50次，还没有检查到取货成功，认为取货失败
+//        {
+//            Disable_duishe();       //关闭掉货检测
+//            //电机->主控，取货失败
+//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb3), LBYTE(DIANJI_ZHUKON_NUMb3));
+//            //PC调试
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb3), LBYTE(DIANJI_ZHUKON_NUMb3));
+//        }
+//    }
 }
 
 /*************************************************

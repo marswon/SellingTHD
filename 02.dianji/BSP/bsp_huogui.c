@@ -5,7 +5,7 @@
 #define flag_init       1
 
 u8 flag_line = 0;               //取货中，货道电机运行，对应层的标志位
-
+//bool TIM3_enable_quhuo = 0;     //用于定时器3中取货检测，每隔500ms检测一次
 
 //功能：货道开机初始化
 //说明：保证货道电机运行在触发区，主要是便于存货并且保证货道电机运行时间固定。
@@ -69,7 +69,6 @@ void HuoDao_Init(void)
                 }
             }
 
-//            flag_times = 0;     //标志位清零
             sprintf(str, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
             USART_DEBUG(str);     //打印PC调试
             flag_times = 0;     //标志位清零
@@ -116,7 +115,6 @@ void HuoDao_line_test(u8 i)
             }
         }
 
-//            flag_times = 0;     //标志位清零
         sprintf(str, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
         USART_DEBUG(str);     //打印PC调试
         flag_times = 0;     //标志位清零
@@ -124,10 +122,10 @@ void HuoDao_line_test(u8 i)
 }
 
 /*******************************************************************************
-函数功能：售货机驱动
+函数功能：弹簧道售货机驱动
 入口参数：m为行位置，n为列位置
 返回值：正常出货，取货返回1；反之返回0，没有实际作用
-说明：开启TIM2是为了避免层反馈出现异常，升降电机一直转，托板一直上升
+说明：暂时米有取货检测
 ********************************************************************************/
 u8 HUOWU_Take(u8 m, u8 n)
 {
@@ -156,23 +154,81 @@ u8 HUOWU_Take(u8 m, u8 n)
         }
     }
 
-    //货道电机通电时间2300ms，实际测试电机运行这么长时间可以正常出货
-//    delay_ms(1000);
-//    delay_ms(1000);
-//    delay_ms(300);
-//    Motor_HuoDao_Stop(m, n);    //对应货道电机停转
-    //货道电机运行20ms时间，应该是会触发停止开关，如果触发停止位，操作如下
-//        if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
-//            || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
+    //开启掉货检测
+    Enable_duishe();
+
+    for(;;)
+    {
+        u8 i = 0, j = 0;
+
+        if(PUTThing == 1)       //检测到货物，高电平
+        {
+            i++;
+        }
+        else
+        {
+            i = 0;
+        }
+
+        if(i >= 3)      //连续3次检测到货物才算检测出货成功
+        {
+            Disable_duishe();       //关闭掉货检测，需要取货检测
+            //电机->主控，出货成功
+            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+            //PC调试
+            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+            break;
+        }
+
+        j++;        //检测总次数纪录，达到设定值退出
+
+        if(j >= 10)         //达到10次，还没有检查到出货成功，认为出货失败
+        {
+            Disable_duishe();       //关闭掉货检测，需要取货检测
+            //电机->主控，出货失败
+            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+            //PC调试
+            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+            return 0;
+        }
+
+        delay_ms(50);   //每隔50ms检测一次
+    }
+
+//    //取货检测
+//    TIM3_enable_quhuo = 1;      //开启TIM3中取货检测
+//    for(;;)
+//    {
+//        u8 i = 0, j = 0;
+//        if(PUTThing == 0)       //检测到货物取走，低电平
 //        {
-//            //所有货道电机不能立即停转
-//            Motor_HuoDao_Stop();
-//    //        delay_ms(1000);             //触发货道电机反馈，不能立即停止，避免货物有时候的掉落现象
-//    //        delay_ms(1000);
-//
-//            flag_line = 0;
+//            i++;
+//        }
+//        else
+//        {
+//            i = 0;
+//        }
+//        if(i >= 3)      //连续3次检测到货物取走才算检测取货成功
+//        {
+//            Disable_duishe();       //关闭掉货检测
+//            //电机->主控，取货成功
+//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb4), LBYTE(DIANJI_ZHUKON_NUMb4));
+//            //PC调试
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb4), LBYTE(DIANJI_ZHUKON_NUMb4));
 //            break;
 //        }
+//        j++;        //检测总次数纪录，达到设定值退出
+//        if(j >= 50)         //达到50次，还没有检查到取货成功，认为取货失败
+//        {
+//            Disable_duishe();       //关闭掉货检测
+//            //电机->主控，取货失败
+//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb3), LBYTE(DIANJI_ZHUKON_NUMb3));
+//            //PC调试
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb3), LBYTE(DIANJI_ZHUKON_NUMb3));
+//            break;
+//        }
+//        delay_ms(50);   //每隔50ms检测一次
+//    }
     return 1;
 }
 

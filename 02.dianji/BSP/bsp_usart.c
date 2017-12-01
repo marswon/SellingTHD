@@ -1,9 +1,6 @@
 #include "bsp_usart.h"
 
 //u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
-//u8 flag_door1 = 1;                  // 0-usart3没收到07, 1-usart3收到07，对射板->电机板
-//u8 flag_door2 = 1;                  // 0-一定时间内没收到07, 1-一定时间内收到07
-//u8 flag_duisheceng = 0;             //对射中第几层反馈正常标志位，不同层对应值不一样
 u8 flag_start_flash = 0;            //远程升级标志位，升级过程中为1，其他情况下为0
 u8 flag_take_huowu = 0;             //在货柜取货的标志位，取货过程中为1，其他情况下为0
 
@@ -469,32 +466,8 @@ void USART_BufferWrite(u8 ntemp)
         __disable_irq();
         NVIC_SystemReset();
     }
-    else if(UsartBuffer[UsartWptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 1) % USART_BUFFER_LEN] == 0x0D
-            && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 2) % USART_BUFFER_LEN] == 0xC0 && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 3) % USART_BUFFER_LEN] == 0x7D
-            && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 5) % USART_BUFFER_LEN] == 0x00
-            && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 6) % USART_BUFFER_LEN] == 0x14 && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 7) % USART_BUFFER_LEN] == 0x02)
-    {
-        //对射板复位
-        Send_CMD(USART3, 0x03, 0x14);
-        USART_DEBUG("reset duishe\r\n");
-    }
 
-    //UsartWptr++;
-    //UsartWptr = UsartWptr % USART_BUFFER_LEN;
     UsartWptr = (UsartWptr + 1) % USART_BUFFER_LEN;
-
-    if(UsartBuffer[UsartRptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 1) % USART_BUFFER_LEN] == 0x0D
-            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 2) % USART_BUFFER_LEN] == 0x40 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 3) % USART_BUFFER_LEN] == 0x6B
-            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 5) % USART_BUFFER_LEN] == 0x00
-            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 6) % USART_BUFFER_LEN] == 0x5C && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 7) % USART_BUFFER_LEN] == 0x02)
-    {
-        //结束升级对射板
-        flag_start_flash = 0;
-        UsartWptr = 0;
-        UsartRptr = 0;
-        Send_CMD(USART3, 0x03, 0x5C);
-        USART_DEBUG("stop update duishe\r\n");
-    }
 }
 
 /*******************************************************************
@@ -517,13 +490,6 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             HUOWU_Take(*Dat, *(Dat + 1));
             flag_take_huowu = 0;
         }
-        else if(Data == USARTCMD_DIANJI_DUISHE_GetDuisheVer) // 返回对射版本号
-        {
-            char strstr[10] = {0};
-            sprintf(strstr, "%s", Dat);
-            Send_CMD_DAT(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_GetDuisheVer), LBYTE(USARTCMD_ZHUKONG_DIANJI_GetDuisheVer), strstr, 7);
-            USART_DEBUG(strstr);
-        }
     }
     else
     {
@@ -537,36 +503,16 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             __disable_irq();
             NVIC_SystemReset();
         }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe) //准备升级对射
+        else if(Data == USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji) //开始升级电机板
         {
-            Send_CMD(USART3, HBYTE(USARTCMD_DIANJI_DUISHE_WillUpdateDuishe), LBYTE(USARTCMD_DIANJI_DUISHE_WillUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_DIANJI_DUISHE_WillUpdateDuishe: %04X\r\n", USARTCMD_DIANJI_DUISHE_WillUpdateDuishe);
+            Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji), LBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji));
+            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji);
             USART_DEBUG(strtmp);
         }
-        else if(Data == USARTCMD_DIANJI_DUISHE_WillUpdateDuishe) //返回准备升级对射
+        else if(Data == USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji) //返回结束升级电机板
         {
-            Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe), LBYTE(USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_WillUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe) //开始升级对射
-        {
-            Send_CMD(USART3, HBYTE(USARTCMD_DIANJI_DUISHE_StartUpdateDuishe), LBYTE(USARTCMD_DIANJI_DUISHE_StartUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_DIANJI_DUISHE_StartUpdateDuishe: %04X\r\n", USARTCMD_DIANJI_DUISHE_StartUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        //else if((Data == USARTCMD_DIANJI_DUISHE_StartUpdateDuishe) && (flag_take_huowu == 0)) //返回开始升级对射
-        else if(Data == USARTCMD_DIANJI_DUISHE_StartUpdateDuishe) //返回开始升级对射
-        {
-            flag_start_flash = 1;
-            Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe), LBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StartUpdateDuishe);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == USARTCMD_DIANJI_DUISHE_StopUpdateDuishe) //返回结束升级对射
-        {
-            Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe), LBYTE(USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StopUpdateDuishe);
+            Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji), LBYTE(USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji));
+            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji);
             USART_DEBUG(strtmp);
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
@@ -575,12 +521,6 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strstr, "%s.%s%s", Version_Year, Version_Month, Version_Day);
             Send_CMD_DAT(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_GetDianjiVer), LBYTE(USARTCMD_ZHUKONG_DIANJI_GetDianjiVer), strstr, 7);
             USART_DEBUG(strstr);
-        }
-        else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDuisheVer) // 获取对射版本
-        {
-            Send_CMD(USART3, HBYTE(USARTCMD_DIANJI_DUISHE_GetDuisheVer), LBYTE(USARTCMD_DIANJI_DUISHE_GetDuisheVer));
-            sprintf(strtmp, "USARTCMD_DIANJI_DUISHE_GetDuisheVer: %04X\r\n", USARTCMD_DIANJI_DUISHE_GetDuisheVer);
-            USART_DEBUG(strtmp);
         }
         else if(Data == 0x0117) // 开启打印
         {
