@@ -1,6 +1,6 @@
 #include "bsp_usart.h"
 
-//u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
+u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
 u8 flag_start_flash = 0;            //远程升级标志位，升级过程中为1，其他情况下为0
 u8 flag_take_huowu = 0;             //在货柜取货的标志位，取货过程中为1，其他情况下为0
 
@@ -70,6 +70,32 @@ unsigned short CRC16_isr(unsigned char *Dat, unsigned int len)
 
     return TxCRC16;
 }
+
+
+#if 1
+#pragma import(__use_no_semihosting)
+//标准库需要的支持函数
+struct __FILE
+{
+    int handle;
+
+};
+
+FILE __stdout;
+//定义_sys_exit()以避免使用半主机模式
+_sys_exit(int x)
+{
+    x = x;
+}
+//重定义fputc函数
+int fputc(int ch, FILE *f)
+{
+    while((USART1->SR & 0X40) == 0); //循环发送,直到发送完毕
+
+    USART1->DR = (u8) ch;
+    return ch;
+}
+#endif
 
 void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte)
 {
@@ -184,7 +210,7 @@ void uart1_init(u32 bound)
 **************************************************************************************************/
 void USART1_IRQHandler(void)
 {
-    uint8_t nTemp;
+    uint8_t nTemp = 0;
 #if SYSTEM_SUPPORT_OS
     OSIntEnter();
 #endif
@@ -195,7 +221,7 @@ void USART1_IRQHandler(void)
         nTemp = USART_ReceiveData(USART1);
         USART_ClearITPendingBit(USART1, USART_IT_RXNE); //clear flag
         USART_BufferWrite(nTemp);
-        //flag_test = nTemp;      //调试标记位，用于PC机调试，根据不同值执行不同动作
+        flag_test = nTemp;      //调试标记位，用于PC机调试，根据不同值执行不同动作
         //printf("flag_test\r\n");
     }
 

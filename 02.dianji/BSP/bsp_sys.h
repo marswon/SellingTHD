@@ -3,14 +3,14 @@
 #include "stm32f10x.h"
 #include "bsp_usart.h"
 #include "bsp_delay.h"
-#include "bsp_adc.h"
+//#include "bsp_adc.h"
 #include "bsp_timer.h"
 #include "bsp_led.h"
 #include "bsp_key.h"
 #include "bsp_sys.h"
 #include "bsp_huogui.h"
 #include <string.h>
-#include <math.h>
+//#include <math.h>
 
 typedef enum
 {
