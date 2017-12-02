@@ -1,8 +1,7 @@
 #include "bsp_sys.h"
-
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    1
-
+#define FLAG_RUN    0
+extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern bool flag_enable_debug;
 
 int main(void)
@@ -94,7 +93,8 @@ int main(void)
 
     while(1)        //PC机调试,记得关闭TIMER3
     {
-        //printf("PC TEST\r\n");
+        printf("PC TEST\r\n");
+
         if(flag_test == 1)          //调试货道初始化
         {
             flag_test = 0;
@@ -129,14 +129,10 @@ int main(void)
         }
         else if(flag_test == 5)
         {
-            //flag_test = 0;
-            if(KEY_Scan(1))     //支持连按，调试按键
-            {
-                LED0 = 1;       //灯亮
-                delay_ms(2000);
-                LED0 = 0;
-                delay_ms(2000);
-            }
+            flag_test = 0;
+            printf("PUTThing : %d\r\n", PUTThing);
+            delay_ms(500);
+            printf("PUTThing : %d\r\n", PUTThing);
         }
         else if(flag_test == 6)
         {
@@ -183,6 +179,17 @@ int main(void)
         {
             flag_test = 0;
             HuoDao_line_test(6);
+        }
+        else if(flag_test == 14)
+        {
+            //flag_test = 0;
+            if(KEY_Scan(1))     //支持连按，调试按键
+            {
+                LED0 = 1;       //灯亮
+                delay_ms(2000);
+                LED0 = 0;
+                delay_ms(2000);
+            }
         }
     }
 
