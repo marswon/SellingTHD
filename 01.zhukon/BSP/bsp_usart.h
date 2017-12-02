@@ -15,10 +15,10 @@
 #define UART5_CONFIG_ENABLED                 (0)
 
 //定义串口波特率
-#define USART1_BAUDRATE                       115200
-#define USART2_BAUDRATE                       115200
-#define USART3_BAUDRATE                       115200
-#define UART4_BAUDRATE                        115200
+#define USART1_BAUDRATE                       9600
+#define USART2_BAUDRATE                       9600
+#define USART3_BAUDRATE                       9600
+#define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
 void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
