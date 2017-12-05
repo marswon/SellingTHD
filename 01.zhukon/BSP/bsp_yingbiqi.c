@@ -9,11 +9,12 @@ void Send_ADDR_coin(u8 addr)
     assert_param(IS_COIN_COMMAND(addr));     //地址字节命令校验
     
     data = (0x01 << 8) | addr;      //对应模式位置1，表示地址字节
-    USART_SendData(USART2, data);   //发送对应地址字节
-    USART_SendData(USART1, data);   //PC调试，发送对应地址字节
-//    data = addr;
-//    USART_SendData(USART2, data);           //发送CHK检验和
-//    USART_SendData(USART1, data);           //PC调试，发送CHK检验和
+    USART_Send2Byte(USART2, data);   //发送对应地址字节
+    USART_Send2Byte(USART1, data);   //PC调试，发送对应地址字节
+//    USART_Send2Byte(USART1, addr);   //PC调试，发送对应地址字节
+    data = addr;
+    USART_Send2Byte(USART2, data);           //发送CHK检验和
+    USART_Send2Byte(USART1, data);           //PC调试，发送CHK检验和
 }
 
 //功能：

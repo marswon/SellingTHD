@@ -246,6 +246,16 @@ void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte)
     while(USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET);
 }
 
+//USART发送9位数据
+void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte)
+{
+    /* 发送一个字节数据到USART */
+    USART_SendData(USARTx, byte);
+
+    /* 等待发送数据寄存器为空 */
+    while(USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET);
+}
+
 //USART发送长度字符串
 void USART_SendBytes(USART_TypeDef* USARTx, uint8_t *str, uint8_t len)
 {

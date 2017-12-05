@@ -25,6 +25,9 @@
 #define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
+//USART发送9位数据
+void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);
+
 void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
 void USART_SendBytes(USART_TypeDef* USARTx, uint8_t *str, uint8_t len);
 void USART_SendBytess(USART_TypeDef* USARTx, char *str);
