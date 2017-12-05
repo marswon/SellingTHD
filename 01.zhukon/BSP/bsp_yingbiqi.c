@@ -10,8 +10,10 @@ void Send_ADDR_coin(u8 addr)
     
     data = (0x01 << 8) | addr;      //对应模式位置1，表示地址字节
     USART_SendData(USART2, data);   //发送对应地址字节
-    data = addr;
-    USART_SendData(USART2, data);           //发送CHK检验和
+    USART_SendData(USART1, data);   //PC调试，发送对应地址字节
+//    data = addr;
+//    USART_SendData(USART2, data);           //发送CHK检验和
+//    USART_SendData(USART1, data);           //PC调试，发送CHK检验和
 }
 
 //功能：

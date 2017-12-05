@@ -13,6 +13,31 @@ u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
 
+#if 1
+#pragma import(__use_no_semihosting)
+//标准库需要的支持函数
+struct __FILE
+{
+    int handle;
+
+};
+
+FILE __stdout;
+//定义_sys_exit()以避免使用半主机模式
+_sys_exit(int x)
+{
+    x = x;
+}
+//重定义fputc函数
+int fputc(int ch, FILE *f)
+{
+    while((USART1->SR & 0X40) == 0); //循环发送,直到发送完毕
+
+    USART1->DR = (u8) ch;
+    return ch;
+}
+#endif
+
 //功能: USART1中断处理函数
 //说明：串口1接GPRS，目前作为PC调试接口
 #if USART1_CONFIG_ENABLED > 0
@@ -27,7 +52,9 @@ void USART1_IRQHandler(void)
     {
         nTemp = USART_ReceiveData(USART1);
         USART_ClearITPendingBit(USART1, USART_IT_RXNE); //clear flag
+        
         flag_test = nTemp;          //测试标志位
+//        printf("flag_test : %d \r\n", flag_test);        //打印标记调试位
         USART_BufferWrite(nTemp);
     }
 

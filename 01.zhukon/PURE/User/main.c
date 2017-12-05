@@ -2,11 +2,13 @@
 #include "bsp_common.h"
 
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    1
+#define FLAG_RUN    0
 
 void KEY_Scan(u8 mode);
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern u8 start_flash_flag;
+extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
+extern bool flag_enable_debug;
 
 int main(void)
 {
@@ -128,6 +130,39 @@ int main(void)
         {
             flag_test = 0;
             USART2_select(4);
+        }
+        else if(flag_test == 7)
+        {
+            u8 temp[100] = {0};
+//            u8 dat = 0;
+            flag_test = 0;
+//            while(1)
+//            {
+//                if(!USART2_COIN_BufRead(&dat))  //读取纸币器回复的信息
+//                {
+//                    break;
+//                }
+//            }
+//            sprintf((char*)temp, "%s\r\n", Version_Year, Version_Month, Version_Day);
+//            //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+//            USART_SendBytes(USART1, ndat, strlen((char*)ndat));
+            USART_DEBUG(USART2_COIN_BUF);
+        }
+        else if(flag_test == 8)     //开启PC打印
+        {
+            flag_test = 0;
+
+            if(!flag_enable_debug)
+            {
+                flag_enable_debug = TRUE;
+            }
+
+            USART_DEBUG("debug\r\n");
+        }
+        else if(flag_test == 9)     //关闭PC打印
+        {
+            flag_test = 0;
+            flag_enable_debug = FALSE;
         }
     }
     
