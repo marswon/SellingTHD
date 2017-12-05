@@ -1,8 +1,11 @@
 #include "stm32f10x.h"
 #include "bsp_common.h"
 
+//测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
+#define FLAG_RUN    1
+
 void KEY_Scan(u8 mode);
-u8 flag_numb;
+extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern u8 start_flash_flag;
 
 int main(void)
@@ -11,9 +14,9 @@ int main(void)
     u16 i = 0;
     u8 ntmp[255] = {0};
     u8 ndat[255] = {0}; // 协议数据
-    u16 nlen = 0; // 协议数据包长度
-    u16 ncrc = 0; // 协议crc16
-    u16 ncmd = 0; // 协议指令
+    u16 nlen = 0;       // 协议数据包长度
+    u16 ncrc = 0;       // 协议crc16
+    u16 ncmd = 0;       // 协议指令
 #if SYS_ENABLE_IAP
     SCB->VTOR = 0x8002000;
     __enable_irq();
@@ -21,11 +24,13 @@ int main(void)
     GPIO_Configure();
     NVIC_Configure();
     USART_Configure();
+    TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
     memset(ndat, 0, sizeof(ndat));
     sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
-    USART_SendBytes(USART2, ndat, strlen((char*)ndat));
+    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
 #if SYS_ENABLE_IAP
 
     if(IAP_Read_UpdateFLAG() != 1)
@@ -35,6 +40,8 @@ int main(void)
     }
 
 #endif
+
+#if FLAG_RUN
 
     while(1)
     {
@@ -84,6 +91,47 @@ int main(void)
             }
         }
     }
+    
+#else
+    
+    while(1)
+    {
+        //PC调试
+        if(flag_test == 1)
+        {
+            flag_test = 0;
+            LED_ON();       //灯亮
+        }
+        else if(flag_test == 2)
+        {
+            flag_test = 0;
+            LED_OFF();       //灯灭
+        }
+        else if(flag_test == 3)
+        {
+            flag_test = 0;
+            sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
+            //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+            USART_SendBytes(USART1, ndat, strlen((char*)ndat));
+        }
+        else if(flag_test == 4)
+        {
+            flag_test = 0;
+            Send_ADDR_coin(RESET_COMMAND);      //发送复位命令
+        }
+        else if(flag_test == 5)
+        {
+            flag_test = 0;
+            Send_ADDR_coin(STATUS_COMMAND);      //发送复位命令
+        }
+        else if(flag_test == 6)
+        {
+            flag_test = 0;
+            USART2_select(4);
+        }
+    }
+    
+#endif
 }
 //功能：主控板按键扫描函数
 //说明：主控板按键长按，会取货第2行第1列，用于工厂检测

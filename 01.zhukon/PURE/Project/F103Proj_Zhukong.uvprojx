@@ -574,6 +574,26 @@
               <FileType>5</FileType>
               <FilePath>..\..\BSP\bsp_usart.h</FilePath>
             </File>
+            <File>
+              <FileName>bsp_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\bsp_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_timer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\BSP\bsp_timer.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_yingbiqi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\bsp_yingbiqi.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_yingbiqi.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\BSP\bsp_yingbiqi.h</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

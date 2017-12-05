@@ -4,11 +4,17 @@ u8 UsartBuffer[USART_BUFFER_LEN] = {0}; //数据缓冲区
 u16 UsartWptr = 0;
 u16 UsartRptr = 0;
 
+//串口2对应纸币器，缓存纸币器回复的信息
+u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
+u8 Usart2Wptr = 0;
+u8 Usart2Rptr = 0;
+
+u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
 
-//函数名: USART1_IRQHandler
-//功能说明: USART1中断处理函数,串口1接GPRS
+//功能: USART1中断处理函数
+//说明：串口1接GPRS，目前作为PC调试接口
 #if USART1_CONFIG_ENABLED > 0
 void USART1_IRQHandler(void)
 {
@@ -21,7 +27,8 @@ void USART1_IRQHandler(void)
     {
         nTemp = USART_ReceiveData(USART1);
         USART_ClearITPendingBit(USART1, USART_IT_RXNE); //clear flag
-        //USART_BufferWrite(nTemp);
+        flag_test = nTemp;          //测试标志位
+        USART_BufferWrite(nTemp);
     }
 
     if(USART_GetFlagStatus(USART1, USART_FLAG_ORE) == SET) //overflow
@@ -36,7 +43,7 @@ void USART1_IRQHandler(void)
 }
 #endif
 
-//说明：串口2接PC调试
+//说明：串口2扩展为4路，之前的温度控制接232小板作为PC调试,现在作为纸币器通信
 #if USART2_CONFIG_ENABLED > 0
 void USART2_IRQHandler(void)
 {
@@ -50,7 +57,8 @@ void USART2_IRQHandler(void)
         nTemp = USART_ReceiveData(USART2);
         USART_ClearITPendingBit(USART2, USART_IT_RXNE); //clear flag
         /************************************************/
-        USART_BufferWrite(nTemp);
+//        USART_BufferWrite(nTemp);
+        USART2_COIN_BufWrite(nTemp);
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -239,7 +247,7 @@ void USART_DEBUG(char *str)
     {
         while(*str != '\0')
         {
-            USART_SendByte(USART2, *str);
+            USART_SendByte(USART1, *str);   //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
             str++;
         }
     }
@@ -337,15 +345,6 @@ void USART_BufferWrite(u8 ntemp)
         Send_CMD(UART4, 0x02, 0x13);
         USART_DEBUG("dianji reset: 0213\r\n");
     }
-    else if(UsartBuffer[UsartWptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 1) % USART_BUFFER_LEN] == 0x0D
-            && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 2) % USART_BUFFER_LEN] == 0xC0 && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 3) % USART_BUFFER_LEN] == 0x39
-            && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 5) % USART_BUFFER_LEN] == 0x00
-            && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 6) % USART_BUFFER_LEN] == 0x14 && UsartBuffer[(USART_BUFFER_LEN + UsartWptr - 7) % USART_BUFFER_LEN] == 0x01)
-    {
-        // 复位对射
-        Send_CMD(UART4, 0x02, 0x14);
-        USART_DEBUG("duishe reset: 0214\r\n");
-    }
 
     UsartWptr = (UsartWptr + 1) % USART_BUFFER_LEN;
 
@@ -361,17 +360,43 @@ void USART_BufferWrite(u8 ntemp)
         Send_CMD(UART4, 0x02, 0x5A);
         USART_DEBUG("stop update dianji: 025A\r\n");
     }
-    else if(UsartBuffer[UsartRptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 1) % USART_BUFFER_LEN] == 0x0D
-            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 2) % USART_BUFFER_LEN] == 0x40 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 3) % USART_BUFFER_LEN] == 0x2F
-            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 5) % USART_BUFFER_LEN] == 0x00
-            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 6) % USART_BUFFER_LEN] == 0x5C && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 7) % USART_BUFFER_LEN] == 0x01)
-    {
-        // 结束对射升级
-        start_flash_flag = 0;
-        Send_CMD(UART4, 0x02, 0x5C);
-        USART_DEBUG("stop update duishe: 025C\r\n");
-    }
+//    else if(UsartBuffer[UsartRptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 1) % USART_BUFFER_LEN] == 0x0D
+//            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 2) % USART_BUFFER_LEN] == 0x40 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 3) % USART_BUFFER_LEN] == 0x2F
+//            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 5) % USART_BUFFER_LEN] == 0x00
+//            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 6) % USART_BUFFER_LEN] == 0x5C && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 7) % USART_BUFFER_LEN] == 0x01)
+//    {
+//        // 结束对射升级
+//        start_flash_flag = 0;
+//        Send_CMD(UART4, 0x02, 0x5C);
+//        USART_DEBUG("stop update duishe: 025C\r\n");
+//    }
 }
+
+//功能：缓存串口2接收到的纸币器回复的信息
+//说明：纸币器收到命令后，会回复信息给我们，我们需要一个单独的BUF来接收。
+void USART2_COIN_BufWrite(u8 ntemp)
+{
+    if((Usart2Wptr + 1) % USART2_BUF_LEN == Usart2Rptr) // full
+    {
+        return;
+    }
+    USART2_COIN_BUF[Usart2Wptr] = ntemp;
+    Usart2Wptr = (Usart2Wptr + 1) % USART2_BUF_LEN;
+}
+
+//功能：读取串口2接收到的纸币器回复的信息
+u8 USART2_COIN_BufRead(u8 *data)
+{
+    if(Usart2Rptr == Usart2Wptr) // empty
+    {
+        return 0;
+    }
+
+    *data = USART2_COIN_BUF[Usart2Rptr];
+    Usart2Rptr = (Usart2Rptr + 1) % USART2_BUF_LEN; //保证读位置值不溢出
+    return 1;
+}
+
 
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {

@@ -6,9 +6,12 @@
 //串口接收队列缓存长度
 #define USART_BUFFER_LEN 5000
 #define SYS_ENABLE_IAP   0
+
+//串口2，纸币器回复消息缓存
+#define USART2_BUF_LEN 50
 /***************************************************/
 //定义配置使能
-#define USART1_CONFIG_ENABLED                (0)
+#define USART1_CONFIG_ENABLED                (1)
 #define USART2_CONFIG_ENABLED                (1)
 #define USART3_CONFIG_ENABLED                (1)
 #define UART4_CONFIG_ENABLED                 (1)
@@ -16,7 +19,8 @@
 
 //定义串口波特率
 #define USART1_BAUDRATE                       115200
-#define USART2_BAUDRATE                       115200
+//串口2连接纸币器，硬币器，定义的波特率为9600
+#define USART2_BAUDRATE                       9600
 #define USART3_BAUDRATE                       115200
 #define UART4_BAUDRATE                        115200
 #define UART5_BAUDRATE                        2400
@@ -25,6 +29,11 @@ void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
 void USART_SendBytes(USART_TypeDef* USARTx, uint8_t *str, uint8_t len);
 void USART_SendBytess(USART_TypeDef* USARTx, char *str);
 void USART_DEBUG(char *str);
+
+//串口2接收和发送
+void USART2_COIN_BufWrite(u8 ntemp);
+u8 USART2_COIN_BufRead(u8 *data);
+
 
 void USART_BufferWrite(u8 ntemp);
 u16 USART_BufferLength(void);
@@ -54,8 +63,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define ZHUKON_ANZHUO_NUMb4   0x013D//取货成功
 #define DIANJI_ZHUKON_NUMb4   0x023D//取货成功
 
-#define ZHUKON_ANZHUO_NUMb5   0x013E//层反馈异常
-#define DIANJI_ZHUKON_NUMb5   0x023E//层反馈异常
+#define ZHUKON_ANZHUO_NUMb5   0x013E//售货机异常
+#define DIANJI_ZHUKON_NUMb5   0x023E//售货机异常
 
 #define ZHUKON_ANZHUO_NUMb6   0x013F//货道检测异常
 #define DIANJI_ZHUKON_NUMb6   0x023F//货道检测异常
@@ -73,9 +82,11 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 
 //准备升级主控
 #define USARTCMD_ANDROID_ZHUKONG_WillUpdateZhukong      0x014D
+//开始升级主控
+#define USARTCMD_ANDROID_ZHUKONG_StartUpdateZhukong     0x015D
+//结束升级主控
+#define USARTCMD_ANDROID_ZHUKONG_StopUpdateZhukong      0x014E
 
-//读取主控版本
-#define USARTCMD_ANDROID_ZHUKONG_GetZhukongVer          0x014A
 
 //准备升级电机
 #define USARTCMD_ANDROID_ZHUKONG_WillUpdateDianji       0x014F
@@ -93,10 +104,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define USARTCMD_ANDROID_ZHUKONG_GetDianjiVer           0x014B
 #define USARTCMD_ZHUKONG_DIANJI_GetDianjiVer            0x024B
 
-
-//结束升级主控
-#define USARTCMD_ANDROID_ZHUKONG_StopUpdateZhukong      0x014E
-
+//读取主控版本
+#define USARTCMD_ANDROID_ZHUKONG_GetZhukongVer          0x014A
 
 #endif  //_BSP_USART_H
 

@@ -20,7 +20,7 @@ void GPIO_Configure(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
-    // for select usart2
+    // for select USART2
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -84,6 +84,28 @@ void NVIC_Configure(void)
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;         //IRQ通道使能
     NVIC_Init(&NVIC_InitStructure);                         //根据指定的参数初始化VIC寄存器
 #endif
+//定时器中断分组
+#if TIM2_CONFIG_ENABLED > 0
+    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;  //TIM2中断
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  //先占优先级1级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  //从优先级3级
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
+    NVIC_Init(&NVIC_InitStructure);  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
+#endif
+#if TIM3_CONFIG_ENABLED > 0
+    NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;             //TIM3中断
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;   //先占优先级1级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;          //从优先级3级
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;             //IRQ通道被使能
+    NVIC_Init(&NVIC_InitStructure);  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
+#endif
+#if TIM4_CONFIG_ENABLED > 0
+    NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;  //TIM3中断
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  //先占优先级1级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;  //从优先级4级
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
+    NVIC_Init(&NVIC_InitStructure);  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
+#endif
 }
 
 void USART_Configure(void)
@@ -133,7 +155,9 @@ void USART_Configure(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     //USART 初始化设置
     USART_InitStructure.USART_BaudRate = USART2_BAUDRATE;       //见宏定义;
-    USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
+//    USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
+    //串口数据为9位，根据MDB串口协议，8位数据位，1位模式位
+    USART_InitStructure.USART_WordLength = USART_WordLength_9b;//字长为9位数据格式
     USART_InitStructure.USART_StopBits = USART_StopBits_1;//一个停止位
     USART_InitStructure.USART_Parity = USART_Parity_No;//无奇偶校验位
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//无硬件数据流控制
@@ -219,20 +243,50 @@ void USART_Configure(void)
     USART_ClearFlag(UART5, USART_FLAG_TC);     /* 清除发送完成标志 */
 #endif
 }
-
+//功能：上电后，对应外设引脚初始化
 void RUN_Init(void)
 {
     // for debug led
-    GPIO_SetBits(GPIOB, GPIO_Pin_14);
+    LED = 0;        //熄灭调试灯
     // for BEEP
-    GPIO_ResetBits(GPIOB, GPIO_Pin_4);
+    BEEP = 0;       //蜂鸣器有问题，无法响
     // for gprs
     GPIO_ResetBits(GPIOE, GPIO_Pin_0);
     delay_ms(1000);
     GPIO_SetBits(GPIOE, GPIO_Pin_0);
     delay_ms(2000);
     GPIO_ResetBits(GPIOE, GPIO_Pin_0);
-    // for usart2
-    GPIO_SetBits(GPIOA, GPIO_Pin_0);
-    GPIO_SetBits(GPIOA, GPIO_Pin_1);
+    // for usart2模式选择连接纸币器，硬币器
+    USART2_select(0);
 }
+
+//功能:串口2扩展功能选择
+//入口参数：mode为模式选择位，值为0~3范围
+//说明：串口2对应的USART2，通过选择器分为四路输出，通过PA0和PA1引脚组合可以选择输出的线路。
+void USART2_select(u8 mode)
+{
+    assert_param(IS_USART2_SELECT(mode));     //参数校验，只有四种模式
+    
+    switch(mode)
+    {
+        case 0:     //USART2连接纸币器、硬币器
+            MODE0_USART2 = 0;   //PA0 = 0，控制引脚0
+            MODE1_USART2 = 0;   //PA1 = 0，控制引脚1
+            break;
+        case 1:     //USART2连接闪付接口，IC卡终端
+            MODE0_USART2 = 1;   //PA0 = 1，控制引脚0
+            MODE1_USART2 = 0;   //PA1 = 0，控制引脚1
+            break;
+        case 2:     //USART2连接扩展备用接口
+            MODE0_USART2 = 0;   //PA0 = 0，控制引脚0
+            MODE1_USART2 = 1;   //PA1 = 1，控制引脚1
+            break;
+        case 3:     //USART2连接温控板接口，之前接232小板用做PC调试
+            MODE0_USART2 = 1;   //PA0 = 1，控制引脚0
+            MODE1_USART2 = 1;   //PA1 = 1，控制引脚1
+            break;
+        default : 
+            break;
+    }
+}
+
