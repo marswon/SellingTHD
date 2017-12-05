@@ -22,9 +22,9 @@ int main(void)
     KEY_Init();
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
     GPIO_Configure();
-    uart1_init(115200);
-    uart3_init(115200);
-    uart2_init(115200);
+    uart1_init(9600);
+    uart3_init(9600);
+    uart2_init(9600);
 //    TIM3_Int_Init(9, 7199); //通用定时器TIM2,1ms
     TIM3_Int_Init(999, 7199); //通用定时器TIM2,100ms
     HuoDao_Init();

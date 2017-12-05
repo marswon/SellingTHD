@@ -18,11 +18,11 @@
 #define UART5_CONFIG_ENABLED                 (0)
 
 //定义串口波特率
-#define USART1_BAUDRATE                       115200
+#define USART1_BAUDRATE                       9600
 //串口2连接纸币器，硬币器，定义的波特率为9600
 #define USART2_BAUDRATE                       9600
-#define USART3_BAUDRATE                       115200
-#define UART4_BAUDRATE                        115200
+#define USART3_BAUDRATE                       9600
+#define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
 void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
