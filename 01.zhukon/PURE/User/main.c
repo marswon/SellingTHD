@@ -5,16 +5,15 @@
 #define FLAG_RUN    0
 
 void KEY_Scan(u8 mode);
-extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
+
 extern u8 start_flash_flag;
-extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
 extern bool flag_enable_debug;
 
 int main(void)
 {
     u8 data = 0;
     u16 i = 0;
-    u8 ntmp[255] = {0};
+    u8 ntmp[255] = {0};     //目前在调试程序中，用于缓存打印的串口2的数据，便于打印
     u8 ndat[255] = {0}; // 协议数据
     u16 nlen = 0;       // 协议数据包长度
     u16 ncrc = 0;       // 协议crc16
@@ -42,7 +41,6 @@ int main(void)
     }
 
 #endif
-
 #if FLAG_RUN
 
     while(1)
@@ -93,9 +91,9 @@ int main(void)
             }
         }
     }
-    
+
 #else
-    
+
     while(1)
     {
         //PC调试
@@ -134,15 +132,38 @@ int main(void)
         else if(flag_test == 7)
         {
             flag_test = 0;
-            Send_ADDR_coin(COIN_TYPE_COMMAND);    //回复机器可用硬币类型
+            Send_ADDR_coin(POLL_COMMAND);    //回复机器动作类型
         }
         else if(flag_test == 8)
         {
-//            u8 temp[100] = {0};
             flag_test = 0;
-            USART_SendBytess(USART1, USART2_COIN_BUF);   //打印串口2接受的纸币器和投币器回复信息
+            Send_ADDR_coin(COIN_TYPE_COMMAND);    //回复机器可用硬币类型
         }
-        else if(flag_test == 9)     //开启PC打印
+        else if(flag_test == 9)
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, 25);      //回复的信息和CHK检验和，多一个字节
+            //打印STATUS_COMMAND指令的回复，回复23个字节
+            USART_SendBytes(USART1, ntmp, 25);  //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+        else if(flag_test == 10)
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, 20);      //回复的信息和CHK检验和，多一个字节
+            //打印TUBE_STATUS_COMMAND指令的回复，回复18个字节
+            USART_SendBytes(USART1, ntmp, 20);   //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+        else if(flag_test == 11)
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, 20);      //回复的信息和CHK检验和，多一个字节
+            //打印TUBE_STATUS_COMMAND指令的回复，回复18个字节
+            USART_SendBytes(USART1, ntmp, 18);   //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+        else if(flag_test == 14)     //开启PC打印
         {
             flag_test = 0;
 
@@ -153,13 +174,13 @@ int main(void)
 
             USART_DEBUG("debug\r\n");
         }
-        else if(flag_test == 10)     //关闭PC打印
+        else if(flag_test == 15)     //关闭PC打印
         {
             flag_test = 0;
             flag_enable_debug = FALSE;
         }
     }
-    
+
 #endif
 }
 //功能：主控板按键扫描函数

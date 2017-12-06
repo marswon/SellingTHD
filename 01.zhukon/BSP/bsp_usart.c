@@ -52,7 +52,6 @@ void USART1_IRQHandler(void)
     {
         nTemp = USART_ReceiveData(USART1);
         USART_ClearITPendingBit(USART1, USART_IT_RXNE); //clear flag
-        
         flag_test = nTemp;          //测试标志位
 //        printf("flag_test : %d \r\n", flag_test);        //打印标记调试位
         USART_BufferWrite(nTemp);
@@ -397,6 +396,7 @@ void USART_BufferWrite(u8 ntemp)
         Send_CMD(UART4, 0x02, 0x5A);
         USART_DEBUG("stop update dianji: 025A\r\n");
     }
+
 //    else if(UsartBuffer[UsartRptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 1) % USART_BUFFER_LEN] == 0x0D
 //            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 2) % USART_BUFFER_LEN] == 0x40 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 3) % USART_BUFFER_LEN] == 0x2F
 //            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 5) % USART_BUFFER_LEN] == 0x00
@@ -417,6 +417,7 @@ void USART2_COIN_BufWrite(u8 ntemp)
     {
         return;
     }
+
     USART2_COIN_BUF[Usart2Wptr] = ntemp;
     Usart2Wptr = (Usart2Wptr + 1) % USART2_BUF_LEN;
 }
@@ -434,6 +435,20 @@ u8 USART2_COIN_BufRead(u8 *data)
     return 1;
 }
 
+//功能：复制串口2接收到的纸币器回复的信息到一个指定的位置
+//入口参数：str为接收的数组，str_len为接收数组长度
+//说明：
+void USART2_COIN_BufCopy(u8 *str, u8 str_len)
+{
+    u8 i;
+    u8 data = 0;
+
+    for(i = 0; i < str_len; i++)
+    {
+        USART2_COIN_BufRead(&data);     //读取串口2接收的数据
+        str[i] = data;
+    }
+}
 
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {

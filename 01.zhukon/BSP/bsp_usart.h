@@ -51,6 +51,11 @@ void IAP_Write_UpdateFLAG(void);
 void IAP_Reset_UpdateFLAG(void);
 u8 IAP_Read_UpdateFLAG(void);
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
+
+void USART2_COIN_BufCopy(u8 *str, u8 str_len);
+
+extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
+extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
 /***************************************************/
 //  串口协议
 /***************************************************/

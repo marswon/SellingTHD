@@ -267,26 +267,30 @@ void RUN_Init(void)
 void USART2_select(u8 mode)
 {
     assert_param(IS_USART2_SELECT(mode));     //参数校验，只有四种模式
-    
+
     switch(mode)
     {
         case 0:     //USART2连接纸币器、硬币器
             MODE0_USART2 = 0;   //PA0 = 0，控制引脚0
             MODE1_USART2 = 0;   //PA1 = 0，控制引脚1
             break;
+
         case 1:     //USART2连接闪付接口，IC卡终端
             MODE0_USART2 = 1;   //PA0 = 1，控制引脚0
             MODE1_USART2 = 0;   //PA1 = 0，控制引脚1
             break;
+
         case 2:     //USART2连接扩展备用接口
             MODE0_USART2 = 0;   //PA0 = 0，控制引脚0
             MODE1_USART2 = 1;   //PA1 = 1，控制引脚1
             break;
+
         case 3:     //USART2连接温控板接口，之前接232小板用做PC调试
             MODE0_USART2 = 1;   //PA0 = 1，控制引脚0
             MODE1_USART2 = 1;   //PA1 = 1，控制引脚1
             break;
-        default : 
+
+        default :
             break;
     }
 }

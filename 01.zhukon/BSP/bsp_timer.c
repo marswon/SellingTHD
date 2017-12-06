@@ -56,7 +56,6 @@ void TIM3_Int_Init(u16 arr, u16 psc)
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
     TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE); //使能指定的TIM3中断,允许更新中断
-
     TIM_Cmd(TIM3, ENABLE);  //使能TIMx外设
 }
 
@@ -101,7 +100,6 @@ void TIM4_Int_Init(u16 arr, u16 psc)
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
     TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
     TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE); //使能指定的TIM3中断,允许更新中断
-
     TIM_Cmd(TIM4, ENABLE);  //使能TIMx外设
 }
 
