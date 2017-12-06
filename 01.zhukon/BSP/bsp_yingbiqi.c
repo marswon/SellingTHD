@@ -17,6 +17,14 @@ void Send_ADDR_coin(u8 addr)
     USART_Send2Byte(USART1, data);           //PC调试，发送CHK检验和
 }
 
+//功能：发送带地址的多个命令函数
+//入口参数：cmd为发送命令的地址，len为命令长度
+//
+void Send_CMD_coin(u8 *cmd, u8 len)
+{
+
+}
+
 //功能：
 //入口参数：
 //说明：

@@ -119,36 +119,30 @@ int main(void)
         else if(flag_test == 4)
         {
             flag_test = 0;
-            Send_ADDR_coin(RESET_COMMAND);      //发送复位命令
+            Send_ADDR_coin(RESET_COMMAND);      //发送复位指令
         }
         else if(flag_test == 5)
         {
             flag_test = 0;
-            Send_ADDR_coin(STATUS_COMMAND);      //发送复位命令
+            Send_ADDR_coin(STATUS_COMMAND);      //发送硬币器状态指令
         }
         else if(flag_test == 6)
         {
             flag_test = 0;
-            USART2_select(4);
+            Send_ADDR_coin(TUBE_STATUS_COMMAND);    //发送钱管状态指令，回复剩余各个钱管状态
         }
         else if(flag_test == 7)
         {
-            u8 temp[100] = {0};
-//            u8 dat = 0;
             flag_test = 0;
-//            while(1)
-//            {
-//                if(!USART2_COIN_BufRead(&dat))  //读取纸币器回复的信息
-//                {
-//                    break;
-//                }
-//            }
-//            sprintf((char*)temp, "%s\r\n", Version_Year, Version_Month, Version_Day);
-//            //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-//            USART_SendBytes(USART1, ndat, strlen((char*)ndat));
-            USART_DEBUG(USART2_COIN_BUF);
+            Send_ADDR_coin(COIN_TYPE_COMMAND);    //回复机器可用硬币类型
         }
-        else if(flag_test == 8)     //开启PC打印
+        else if(flag_test == 8)
+        {
+//            u8 temp[100] = {0};
+            flag_test = 0;
+            USART_SendBytess(USART1, USART2_COIN_BUF);   //打印串口2接受的纸币器和投币器回复信息
+        }
+        else if(flag_test == 9)     //开启PC打印
         {
             flag_test = 0;
 
@@ -159,7 +153,7 @@ int main(void)
 
             USART_DEBUG("debug\r\n");
         }
-        else if(flag_test == 9)     //关闭PC打印
+        else if(flag_test == 10)     //关闭PC打印
         {
             flag_test = 0;
             flag_enable_debug = FALSE;
