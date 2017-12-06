@@ -5,7 +5,6 @@
 #define FLAG_RUN    0
 
 void KEY_Scan(u8 mode);
-
 extern u8 start_flash_flag;
 extern bool flag_enable_debug;
 
@@ -100,85 +99,122 @@ int main(void)
         if(flag_test == 1)
         {
             flag_test = 0;
-            LED_ON();       //灯亮
-        }
-        else if(flag_test == 2)
-        {
-            flag_test = 0;
-            LED_OFF();       //灯灭
-        }
-        else if(flag_test == 3)
-        {
-            flag_test = 0;
             sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
             //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
             USART_SendBytes(USART1, ndat, strlen((char*)ndat));
         }
-        else if(flag_test == 4)
+        else if(flag_test == 2)
         {
             flag_test = 0;
             Send_ADDR_coin(RESET_COMMAND);      //发送复位指令
         }
-        else if(flag_test == 5)
+        else if(flag_test == 3)
         {
             flag_test = 0;
             Send_ADDR_coin(STATUS_COMMAND);      //发送硬币器状态指令
         }
-        else if(flag_test == 6)
+        else if(flag_test == 4)
         {
             flag_test = 0;
             Send_ADDR_coin(TUBE_STATUS_COMMAND);    //发送钱管状态指令，回复剩余各个钱管状态
         }
-        else if(flag_test == 7)
+        else if(flag_test == 5)
         {
             flag_test = 0;
             Send_ADDR_coin(POLL_COMMAND);    //回复机器动作类型
         }
-        else if(flag_test == 8)
+        else if(flag_test == 6)
         {
             flag_test = 0;
             Send_ADDR_coin(COIN_TYPE_COMMAND);    //回复机器可用硬币类型
         }
+        else if(flag_test == 7)
+        {
+            flag_test = 0;
+            Send_ADDR_coin(DISPENSE_COMMAND);       //回复机器中支出硬币类型及个数
+        }
+        else if(flag_test == 8)
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, LEN_STATUS + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印STATUS_COMMAND指令的回复，回复23个字节
+            USART_SendBytes(USART1, ntmp, LEN_STATUS + 2);  //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
         else if(flag_test == 9)
         {
             flag_test = 0;
-            USART2_COIN_BufCopy(ntmp, 25);      //回复的信息和CHK检验和，多一个字节
-            //打印STATUS_COMMAND指令的回复，回复23个字节
-            USART_SendBytes(USART1, ntmp, 25);  //打印串口2接受的纸币器和投币器回复信息
+            USART2_COIN_BufCopy(ntmp, LEN_TUBE_STATUS + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印TUBE_STATUS_COMMAND指令的回复，回复18个字节
+            USART_SendBytes(USART1, ntmp, LEN_TUBE_STATUS + 2);   //打印串口2接受的纸币器和投币器回复信息
             memset(ntmp, 0, sizeof(ntmp));      //全部清零
         }
         else if(flag_test == 10)
         {
             flag_test = 0;
-            USART2_COIN_BufCopy(ntmp, 20);      //回复的信息和CHK检验和，多一个字节
-            //打印TUBE_STATUS_COMMAND指令的回复，回复18个字节
-            USART_SendBytes(USART1, ntmp, 20);   //打印串口2接受的纸币器和投币器回复信息
+            USART2_COIN_BufCopy(ntmp, LEN_POLL + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印POLL指令的回复，回复16个字节
+            USART_SendBytes(USART1, ntmp, LEN_POLL + 2);   //打印串口2接受的纸币器和投币器回复信息
             memset(ntmp, 0, sizeof(ntmp));      //全部清零
         }
         else if(flag_test == 11)
         {
             flag_test = 0;
-            USART2_COIN_BufCopy(ntmp, 20);      //回复的信息和CHK检验和，多一个字节
-            //打印TUBE_STATUS_COMMAND指令的回复，回复18个字节
-            USART_SendBytes(USART1, ntmp, 18);   //打印串口2接受的纸币器和投币器回复信息
+            USART2_COIN_BufCopy(ntmp, LEN_COIN_TYPE + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印COIN_TYPE指令的回复，回复4个字节
+            USART_SendBytes(USART1, ntmp, LEN_COIN_TYPE + 2);   //打印串口2接受的纸币器和投币器回复信息
             memset(ntmp, 0, sizeof(ntmp));      //全部清零
         }
-        else if(flag_test == 14)     //开启PC打印
+        else if(flag_test == 12)
         {
             flag_test = 0;
-
-            if(!flag_enable_debug)
-            {
-                flag_enable_debug = TRUE;
-            }
-
-            USART_DEBUG("debug\r\n");
+            USART2_COIN_BufCopy(ntmp, LEN_DISPENSE + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印DISPENSE指令的回复，回复1个字节
+            USART_SendBytes(USART1, ntmp, LEN_DISPENSE + 2);   //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
         }
-        else if(flag_test == 15)     //关闭PC打印
+        else if(flag_test == 13)    //发送扩展指令
         {
             flag_test = 0;
-            flag_enable_debug = FALSE;
+            Send_CMD_EXP_coin(IDETIFICATION_EXP, NULL);     //发送扩展指令0x0F00
         }
+        else if(flag_test == 14)    //发送扩展指令
+        {
+            flag_test = 0;
+            Send_CMD_EXP_coin(SEND_DIAGNOSTIC_EXP, NULL);     //发送扩展指令0x0F05
+        }
+        else if(flag_test == 15)    //打印扩展指令回复
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, LEN_IDETIFICATION + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印IDETIFICATION_EXP指令的回复，回复33个字节
+            USART_SendBytes(USART1, ntmp, LEN_IDETIFICATION + 2);   //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+        else if(flag_test == 16)    //打印扩展指令回复
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, LEN_SEND_DIAGNOSTIC + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印SEND_DIAGNOSTIC_EXP指令的回复，回复16个字节
+            USART_SendBytes(USART1, ntmp, LEN_SEND_DIAGNOSTIC + 2);   //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+//        else if(flag_test == 15)     //开启PC打印
+//        {
+//            flag_test = 0;
+
+//            if(!flag_enable_debug)
+//            {
+//                flag_enable_debug = TRUE;
+//            }
+
+//            USART_DEBUG("debug\r\n");
+//        }
+//        else if(flag_test == 16)     //关闭PC打印
+//        {
+//            flag_test = 0;
+//            flag_enable_debug = FALSE;
+//        }
     }
 
 #endif
