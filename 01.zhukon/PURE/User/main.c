@@ -169,6 +169,14 @@ int main(void)
         {
             flag_test = 0;
             USART2_COIN_BufCopy(ntmp, LEN_DISPENSE + 2);      //回复的信息和CHK检验和，多一个字节
+            //打印DISPENSE指令的回复，回复4个字节
+            USART_SendBytes(USART1, ntmp, LEN_DISPENSE + 2);   //打印串口2接受的纸币器和投币器回复信息
+            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+        else if(flag_test == 12)
+        {
+            flag_test = 0;
+            USART2_COIN_BufCopy(ntmp, LEN_DISPENSE + 2);      //回复的信息和CHK检验和，多一个字节
             //打印DISPENSE指令的回复，回复1个字节
             USART_SendBytes(USART1, ntmp, LEN_DISPENSE + 2);   //打印串口2接受的纸币器和投币器回复信息
             memset(ntmp, 0, sizeof(ntmp));      //全部清零
