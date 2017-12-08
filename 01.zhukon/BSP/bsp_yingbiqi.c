@@ -1,7 +1,7 @@
 #include "bsp_yingbiqi.h"
 
-//功能：发送基本命令函数
-//入口参数：cmd为发送的基本命令字节
+//功能：发送常规命令函数
+//入口参数：basic_cmd为发送的常规命令字节，data为需要发送数据区常规指令的数据
 //返回值：正常返回1，异常返回0
 //说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址。命令后，接着CHK检验和
 u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data)
@@ -11,12 +11,12 @@ u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data)
     u8 dat[5] = {0};
     u8 num = 0;     //数据区总和
 
-    if(IS_COIN_BASIC_COMMAND(basic_cmd) == 0)     //地址字节命令校验
+    if(IS_COIN_BASIC_COMMAND(basic_cmd) == 0)     //常规命令校验
     {
         return 0;   //如果不是定义的命令,会直接退出
     }
 
-    //根据基础指令设置数据区长度
+    //根据常规指令设置数据区长度
     if(COIN_TYPE_COMMAND == basic_cmd)
     {
         dat_len = DAT_COIN_TYPE;
@@ -48,7 +48,7 @@ u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data)
 }
 
 //功能：发送扩展命令函数
-//入口参数：exp_cmd为发送的扩展命令字节
+//入口参数：exp_cmd为发送的扩展命令字节，data为需要发送数据区扩展指令的数据
 //说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址
 u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
 {
@@ -72,13 +72,13 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
         dat_len = DAT_PAYOUT;
     }
 
-    cmd = (0x01 << 8) | 0x0F;                  //对应模式位置1，表示地址字节,所以扩展字节高位都是0x0F
-    USART_Send2Byte(USART2, cmd);              //发送对应地址字节
-    USART_Send2Byte(USART1, cmd);              //PC调试，发送对应地址字节
+    cmd = (0x01 << 8) | 0x0F;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x0F
+    USART_Send2Byte(USART2, cmd);       //发送对应地址字节
+    USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
 //    cmd = (0x01 << 8) | (exp_cmd & 0xFF);      //副指令，测试看看需要模式位置1么？
-    cmd = (exp_cmd & 0xFF);
-    USART_Send2Byte(USART2, cmd);              //发送副指令
-    USART_Send2Byte(USART1, cmd);              //PC调试，发送副指令
+    cmd = (exp_cmd & 0xFF);             //副指令，实际测试结果不需要地址位置1
+    USART_Send2Byte(USART2, cmd);       //发送副指令
+    USART_Send2Byte(USART1, cmd);       //PC调试，发送副指令
 
     if(dat_len != 0)    //扩展指令对应数据区初始化及发送指令
     {
