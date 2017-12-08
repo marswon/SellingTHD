@@ -1,6 +1,6 @@
 #include "bsp_sys.h"
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    0
+#define FLAG_RUN    1
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern bool flag_enable_debug;
 

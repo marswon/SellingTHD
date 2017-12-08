@@ -4,21 +4,46 @@
 //入口参数：cmd为发送的基本命令字节
 //返回值：正常返回1，异常返回0
 //说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址。命令后，接着CHK检验和
-u8 Send_ADDR_coin(u8 cmd)
+u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data)
 {
-    u16 data = 0;
+    u16 cmd = 0;
+    u8 dat_len = 0, i = 0;
+    u8 dat[5] = {0};
+    u8 num = 0;     //数据区总和
 
-    if(IS_COIN_BASIC_COMMAND(cmd) == 0)     //地址字节命令校验
+    if(IS_COIN_BASIC_COMMAND(basic_cmd) == 0)     //地址字节命令校验
     {
         return 0;   //如果不是定义的命令,会直接退出
     }
 
-    data = (0x01 << 8) | cmd;      //对应模式位置1，表示地址字节
-    USART_Send2Byte(USART2, data);   //发送对应地址字节
-    USART_Send2Byte(USART1, data);   //PC调试，发送对应地址字节
-    data = cmd;
-    USART_Send2Byte(USART2, data);           //发送CHK检验和
-    USART_Send2Byte(USART1, data);           //PC调试，发送CHK检验和
+    //根据基础指令设置数据区长度
+    if(COIN_TYPE_COMMAND == basic_cmd)
+    {
+        dat_len = DAT_COIN_TYPE;
+    }
+    else if(DISPENSE_COMMAND == basic_cmd)
+    {
+        dat_len = DAT_DISPENSE;
+    }
+    
+    cmd = (0x01 << 8) | basic_cmd;  //对应模式位置1，表示地址字节
+    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+    USART_Send2Byte(USART1, cmd);   //PC调试，发送对应地址字节
+
+    if(dat_len != 0)    //常规指令对应数据区初始化及发送指令
+    {
+        for(i = 0; i < dat_len; i++)
+        {
+            dat[i] = data[i];
+            USART_SendByte(USART2, dat[i]);     //发送基础指令数据区
+            USART_SendByte(USART1, dat[i]);     //PC调试，发送基础指令数据区
+            num += dat[i];      //检验和
+        }
+    }
+    
+    cmd = basic_cmd + num;          //计算校验和
+    USART_Send2Byte(USART2, cmd);           //发送CHK检验和
+    USART_Send2Byte(USART1, cmd);           //PC调试，发送CHK检验和
     return 1;
 }
 
@@ -50,7 +75,8 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
     cmd = (0x01 << 8) | 0x0F;                  //对应模式位置1，表示地址字节,所以扩展字节高位都是0x0F
     USART_Send2Byte(USART2, cmd);              //发送对应地址字节
     USART_Send2Byte(USART1, cmd);              //PC调试，发送对应地址字节
-    cmd = (0x01 << 8) | (exp_cmd & 0xFF);      //副指令，测试看看需要模式位置1么？
+//    cmd = (0x01 << 8) | (exp_cmd & 0xFF);      //副指令，测试看看需要模式位置1么？
+    cmd = (exp_cmd & 0xFF);
     USART_Send2Byte(USART2, cmd);              //发送副指令
     USART_Send2Byte(USART1, cmd);              //PC调试，发送副指令
 

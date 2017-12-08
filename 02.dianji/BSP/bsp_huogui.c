@@ -130,6 +130,7 @@ void HuoDao_line_test(u8 i)
 u8 HUOWU_Take(u8 m, u8 n)
 {
     u8 flag_times = 0;   //运行时间标志位，第一次运行时间必须保证越过临界区
+    u8 i = 0, j = 0;
     Motor_HuoDao_Move(m, n);    //对应货道电机运行
 
     for(;;)
@@ -156,11 +157,11 @@ u8 HUOWU_Take(u8 m, u8 n)
 
     //开启掉货检测
     Enable_duishe();
+    delay_ms(50);
 
     for(;;)
     {
-        u8 i = 0, j = 0;
-
+        printf("PUTThing : %d\r\n", PUTThing);
         if(PUTThing == 1)       //检测到货物，高电平
         {
             i++;
@@ -176,23 +177,24 @@ u8 HUOWU_Take(u8 m, u8 n)
             //电机->主控，出货成功
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             //PC调试
-            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             break;
         }
 
         j++;        //检测总次数纪录，达到设定值退出
 
-        if(j >= 10)         //达到10次，还没有检查到出货成功，认为出货失败
+//        printf("j : %d\r\n", j);
+        if(j >= 200)         //达到10次，还没有检查到出货成功，认为出货失败
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货失败
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
             //PC调试
-            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
             return 0;
         }
 
-        delay_ms(50);   //每隔50ms检测一次
+        delay_ms(10);   //每隔50ms检测一次
     }
 
 //    //取货检测

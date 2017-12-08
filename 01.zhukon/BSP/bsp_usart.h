@@ -8,7 +8,7 @@
 #define SYS_ENABLE_IAP   0
 
 //串口2，纸币器回复消息缓存
-#define USART2_BUF_LEN 50
+#define USART2_BUF_LEN 255
 /***************************************************/
 //定义配置使能
 #define USART1_CONFIG_ENABLED                (1)

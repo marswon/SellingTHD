@@ -25,6 +25,9 @@
 #define     LEN_POLL            16
 #define     LEN_COIN_TYPE       4
 #define     LEN_DISPENSE        1
+//常规指令发送数据区长度，只有2条指令有数据区
+#define     DAT_COIN_TYPE           4
+#define     DAT_DISPENSE            1
 //扩展指令回复数据长度，不包括CHK校验字节
 #define     LEN_IDETIFICATION       33
 #define     LEN_FEATURE_ENABLE      0
@@ -47,7 +50,7 @@
                 (exp_cmd == PAYOUT_STATUS_EXP) || (exp_cmd == PAYOUT_VALUE_POLL_EXP) || (exp_cmd == SEND_DIAGNOSTIC_EXP))
 
 //发送地址字节和CHK校验和
-u8 Send_ADDR_coin(u8 cmd);
+u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data);
 //发送扩展命令函数，包括数据区
 u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data);
 

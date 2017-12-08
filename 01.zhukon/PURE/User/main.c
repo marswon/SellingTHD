@@ -2,7 +2,7 @@
 #include "bsp_common.h"
 
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    0
+#define FLAG_RUN    1
 
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
@@ -56,6 +56,7 @@ int main(void)
 
                 if(ntmp[i - 1] == 0x0D && ntmp[i] == 0x0A) // 判断包尾
                 {
+//                    USART_SendBytess(USART1, ntmp);     //打印收到的命令
                     nlen = MAKEWORD(ntmp[i - 4], ntmp[i - 5]); // 获取数据包长度
 
                     if(i > nlen)
@@ -65,8 +66,8 @@ int main(void)
                         if(ncrc == MAKEWORD(ntmp[i - 2], ntmp[i - 3])) // crc判断
                         {
                             ncmd = MAKEWORD(ntmp[i - (nlen + 5 - 1)], ntmp[i - (nlen + 5)]); // 解析出串口协议命令,cmd1+cmd2
-                            //sprintf(strtest, "cmd: %04X\r\n", ncmd);
-                            //USART_DEBUG(strtest);
+//                            sprintf(strtest, "cmd: %04X\r\n", ncmd);
+//                            USART_DEBUG(strtest);
 
                             if(nlen > 2) // 获取数据区域
                             {
@@ -106,32 +107,38 @@ int main(void)
         else if(flag_test == 2)
         {
             flag_test = 0;
-            Send_ADDR_coin(RESET_COMMAND);      //发送复位指令
+            Send_CMD_BASIC_coin(RESET_COMMAND, NULL);      //发送复位指令
         }
         else if(flag_test == 3)
         {
             flag_test = 0;
-            Send_ADDR_coin(STATUS_COMMAND);      //发送硬币器状态指令
+            Send_CMD_BASIC_coin(STATUS_COMMAND, NULL);      //发送硬币器状态指令
         }
         else if(flag_test == 4)
         {
             flag_test = 0;
-            Send_ADDR_coin(TUBE_STATUS_COMMAND);    //发送钱管状态指令，回复剩余各个钱管状态
+            Send_CMD_BASIC_coin(TUBE_STATUS_COMMAND, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
         }
         else if(flag_test == 5)
         {
             flag_test = 0;
-            Send_ADDR_coin(POLL_COMMAND);    //回复机器动作类型
+            Send_CMD_BASIC_coin(POLL_COMMAND, NULL);    //回复机器动作类型
         }
         else if(flag_test == 6)
         {
-            flag_test = 0;
-            Send_ADDR_coin(COIN_TYPE_COMMAND);    //回复机器可用硬币类型
+            u8 coin_dat[4] = {0};
+            flag_test = 0; 
+            coin_dat[0] = 0;
+            coin_dat[1] = 3;
+            coin_dat[2] = 0;
+            coin_dat[3] = 0;
+            Send_CMD_BASIC_coin(COIN_TYPE_COMMAND, coin_dat);    //回复机器可用硬币类型
         }
         else if(flag_test == 7)
         {
             flag_test = 0;
-            Send_ADDR_coin(DISPENSE_COMMAND);       //回复机器中支出硬币类型及个数
+            data = 0;
+            Send_CMD_BASIC_coin(DISPENSE_COMMAND, &data);       //回复机器中支出硬币类型及个数
         }
         else if(flag_test == 8)
         {
@@ -206,6 +213,10 @@ int main(void)
             //打印SEND_DIAGNOSTIC_EXP指令的回复，回复16个字节
             USART_SendBytes(USART1, ntmp, LEN_SEND_DIAGNOSTIC + 2);   //打印串口2接受的纸币器和投币器回复信息
             memset(ntmp, 0, sizeof(ntmp));      //全部清零
+        }
+        else if(flag_test == 17)
+        {
+            
         }
 //        else if(flag_test == 15)     //开启PC打印
 //        {

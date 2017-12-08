@@ -128,8 +128,8 @@ void USART_Configure(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     // 第4步：USART 初始化设置
     USART_InitStructure.USART_BaudRate = USART1_BAUDRATE;//头文件宏定义，方便移植;
-//    USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
-    USART_InitStructure.USART_WordLength = USART_WordLength_9b;//PC调试，字长为9位数据格式
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
+//    USART_InitStructure.USART_WordLength = USART_WordLength_9b;//PC调试，字长为9位数据格式
     USART_InitStructure.USART_StopBits = USART_StopBits_1;//一个停止位
     USART_InitStructure.USART_Parity = USART_Parity_No;//无奇偶校验位
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//无硬件数据流控制

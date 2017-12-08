@@ -55,6 +55,7 @@ void USART1_IRQHandler(void)
         flag_test = nTemp;          //测试标志位
 //        printf("flag_test : %d \r\n", flag_test);        //打印标记调试位
         USART_BufferWrite(nTemp);
+//        USART_SendByte(USART1, nTemp);
     }
 
     if(USART_GetFlagStatus(USART1, USART_FLAG_ORE) == SET) //overflow
@@ -114,6 +115,7 @@ void USART3_IRQHandler(void)
         USART_ClearITPendingBit(USART3, USART_IT_RXNE); //clear flag
         /************************************************/
         USART_BufferWrite(nTemp);
+//        USART_SendByte(USART1, nTemp);
     }
 
     if(USART_GetFlagStatus(USART3, USART_FLAG_ORE) == SET) //overflow
@@ -143,7 +145,7 @@ void UART4_IRQHandler(void)
         USART_ClearITPendingBit(UART4, USART_IT_RXNE); //clear flag
         /************************************************/
         USART_BufferWrite(nTemp);
-        //USART_SendByte(USART2, nTemp);
+        USART_SendByte(USART1, nTemp);
     }
 
     if(USART_GetFlagStatus(UART4, USART_FLAG_ORE) == SET) //overflow
@@ -453,9 +455,9 @@ void USART2_COIN_BufCopy(u8 *str, u8 str_len)
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {
     char strtmp[100] = {0};
-    //sprintf(strtmp, "Data: %04X\r\n", Data);
-    //USART_DEBUG(strtmp);
-    //memset(strtmp, 0, sizeof(strtmp));
+    sprintf(strtmp, "Data: %04X\r\n", Data);
+    USART_DEBUG(strtmp);
+    memset(strtmp, 0, sizeof(strtmp));
 
     if(dat_len != 0) // 处理数据区域
     {
