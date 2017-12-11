@@ -162,6 +162,7 @@ u8 HUOWU_Take(u8 m, u8 n)
     for(;;)
     {
         printf("PUTThing : %d\r\n", PUTThing);
+
         if(PUTThing == 1)       //检测到货物，高电平
         {
             i++;

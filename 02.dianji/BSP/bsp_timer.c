@@ -64,7 +64,7 @@ void TIM3_Int_Init(u16 arr, u16 psc)
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
     TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE); //使能指定的TIM3中断,允许更新中断
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;  //TIM3中断
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  //先占优先级0级
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  //先占优先级1级
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  //从优先级3级
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
     NVIC_Init(&NVIC_InitStructure);  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
