@@ -104,27 +104,27 @@ int main(void)
             //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
             USART_SendBytes(USART1, ndat, strlen((char*)ndat));
         }
-        else if(flag_test == 2)
+        else if(flag_test == 2)     //发送0x08
         {
             flag_test = 0;
             Send_CMD_BASIC_coin(RESET_COMMAND, NULL);      //发送复位指令
         }
-        else if(flag_test == 3)
+        else if(flag_test == 3)     //发送0x09
         {
             flag_test = 0;
             Send_CMD_BASIC_coin(STATUS_COMMAND, NULL);      //发送硬币器状态指令
         }
-        else if(flag_test == 4)
+        else if(flag_test == 4)     //发送0x0A
         {
             flag_test = 0;
             Send_CMD_BASIC_coin(TUBE_STATUS_COMMAND, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
         }
-        else if(flag_test == 5)
+        else if(flag_test == 5)     //发送0x0B
         {
             flag_test = 0;
             Send_CMD_BASIC_coin(POLL_COMMAND, NULL);    //回复机器动作类型
         }
-        else if(flag_test == 6)
+        else if(flag_test == 6)     //发送0x0C
         {
             u8 coin_dat[4] = {0};
             flag_test = 0;
@@ -134,7 +134,7 @@ int main(void)
             coin_dat[3] = 0xFF;
             Send_CMD_BASIC_coin(COIN_TYPE_COMMAND, coin_dat);    //回复机器可用硬币类型
         }
-        else if(flag_test == 7)
+        else if(flag_test == 7)     //发送0x0D
         {
             flag_test = 0;
             data = 0;
@@ -207,7 +207,7 @@ int main(void)
         {
             u8 coin_dat = 0;
             flag_test = 0;
-            Send_CMD_EXP_coin(PAYOUT_EXP, coin_dat);     //发送扩展指令0x0F02和数据区
+            Send_CMD_EXP_coin(PAYOUT_EXP, &coin_dat);     //发送扩展指令0x0F02和数据区
         }
         else if(flag_test == 0x11)    //发送扩展指令0x0F03
         {

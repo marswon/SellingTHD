@@ -86,6 +86,7 @@ void USART2_IRQHandler(void)
         /************************************************/
 //        USART_BufferWrite(nTemp);
         USART2_COIN_BufWrite(nTemp);
+        USART_SendByte(USART1, nTemp);
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -449,6 +450,7 @@ void USART2_COIN_BufCopy(u8 *str, u8 str_len)
     {
         USART2_COIN_BufRead(&data);     //读取串口2接收的数据
         str[i] = data;
+        data = 0;       //实际中，读取越界后，CHK校验和会一直出现在后续中。
     }
 }
 
