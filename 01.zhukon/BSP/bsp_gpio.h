@@ -12,7 +12,7 @@
 //LED灯灭
 #define LED_OFF()       (LED = 0)
 //串口2选择,总共4种模式
-#define IS_USART2_SELECT ((mode == 0) || (mode == 1) || (mode == 2) || (mode == 3))
+//#define IS_USART2_SELECT(USART2_MODE) ((USART2_MODE == 0) || (USART2_MODE == 1) || (USART2_MODE == 2) || (USART2_MODE == 3))
 //串口2模式配置引脚
 #define MODE0_USART2    PAout(0)
 #define MODE1_USART2    PAout(1)

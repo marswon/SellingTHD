@@ -311,8 +311,20 @@ void KEY_Scan(u8 mode)
     }
 }
 
+//功能：参数校验错误处理函数
+//说明：固件库函数中默认都有参数检验的过程，实际中默认都是没有开启的，我们开启后会有编译错误产生，
+//因为void assert_failed(uint8_t* file, uint32_t line)函数没有定义。
+//void assert_failed(uint8_t* file, uint32_t line)
+//{
+//  /* User can add his own implementation to report the file name and line number,
+//     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
-
-
+//  /* Infinite loop */
+//  while (1)
+//  {
+//      printf("Wrong parameters value: file %s on line %d\r\n", file, line);
+//      delay_ms(1000);
+//  }
+//}
 
 

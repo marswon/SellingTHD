@@ -313,7 +313,7 @@
             <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
-            <OneElfS>1</OneElfS>
+            <OneElfS>0</OneElfS>
             <Strict>0</Strict>
             <EnumInt>0</EnumInt>
             <PlainCh>0</PlainCh>
@@ -593,6 +593,11 @@
               <FileName>bsp_yingbiqi.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\BSP\bsp_yingbiqi.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_conf.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\stm32f10x_conf.h</FilePath>
             </File>
           </Files>
         </Group>
