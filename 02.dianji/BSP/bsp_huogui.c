@@ -161,7 +161,7 @@ u8 HUOWU_Take(u8 m, u8 n)
 
     for(;;)
     {
-        printf("PUTThing : %d\r\n", PUTThing);
+//        printf("PUTThing : %d\r\n", PUTThing);
 
         if(PUTThing == 1)       //检测到货物，高电平
         {
@@ -185,7 +185,7 @@ u8 HUOWU_Take(u8 m, u8 n)
         j++;        //检测总次数纪录，达到设定值退出
 
 //        printf("j : %d\r\n", j);
-        if(j >= 200)         //达到10次，还没有检查到出货成功，认为出货失败
+        if(j >= 100)         //达到10次，还没有检查到出货成功，认为出货失败
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货失败
