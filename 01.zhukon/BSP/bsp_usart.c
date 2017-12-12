@@ -86,7 +86,7 @@ void USART2_IRQHandler(void)
         /************************************************/
 //        USART_BufferWrite(nTemp);
         USART2_COIN_BufWrite(nTemp);
-        USART_SendByte(USART1, nTemp);
+        USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -440,7 +440,7 @@ u8 USART2_COIN_BufRead(u8 *data)
 
 //功能：复制串口2接收到的纸币器回复的信息到一个指定的位置
 //入口参数：str为接收的数组，str_len为接收数组长度
-//说明：
+//说明：先读取纸币器回复信息的缓存，然后写入到指定的位置
 void USART2_COIN_BufCopy(u8 *str, u8 str_len)
 {
     u8 i;
@@ -454,6 +454,7 @@ void USART2_COIN_BufCopy(u8 *str, u8 str_len)
     }
 }
 
+//功能：串口协议命令处理
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {
     char strtmp[100] = {0};
