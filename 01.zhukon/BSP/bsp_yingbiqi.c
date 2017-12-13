@@ -1,5 +1,8 @@
 #include "bsp_yingbiqi.h"
 
+//硬币器，纸币器初始化，串口指令延时等待标志位
+#define FLAG_WAIT   1
+
 //功能：发送常规命令函数
 //入口参数：basic_cmd为发送的常规命令字节，data为需要发送数据区常规指令的数据
 //返回值：正常返回1，异常返回0
@@ -96,7 +99,6 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
 //        USART_Send2Byte(USART2, cmd);       //发送对应地址字节
 //        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
 //    }
-//    cmd = (0x01 << 8) | (exp_cmd & 0xFF);      //副指令，测试看看需要模式位置1么？
     cmd = (exp_cmd & 0xFF);             //副指令，实际测试结果不需要地址位置1
     USART_Send2Byte(USART2, cmd);       //发送副指令
     USART_Send2Byte(USART1, cmd);       //PC调试，发送副指令
@@ -157,15 +159,102 @@ void Send_CMD_coin(u8 *cmd, u8 len)
 {
 }
 
-//功能：
+//功能：硬币器初始化
 //入口参数：
-//说明：
-//void Send_DATA_coin()
-//{
+//说明：硬币器初始化函数，按照文档初始化流程
+void YingBiQi_Init(void)
+{
+    u8 coin_dat[4] = {0};
+    Send_CMD_BASIC_coin(RESET_YING, NULL);      //发送复位指令
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_BASIC_coin(STATUS_YING, NULL);      //发送硬币器状态指令
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
+    coin_dat[1] = 0x00;
+    coin_dat[2] = 0x00;
+    coin_dat[3] = 0x03;
+    Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_EXP_coin(SEND_DIAGNOSTIC_YING, NULL);     //发送扩展指令0x0F05
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    coin_dat[0] = 0x00;
+    coin_dat[1] = 0x03;
+    coin_dat[2] = 0xFF;
+    coin_dat[3] = 0xFF;
+    Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //回复机器可用硬币类型
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
 
-//}
+    while(1)
+    {
+        Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
+#if(FLAG_WAIT == 1)
+        delay_ms(10);
+#endif
+        Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
+        delay_ms(1000);
+    }
+}
 
+//功能：纸币器初始化
+//入口参数：
+//说明：纸币器初始化函数，按照文档初始化流程
+void ZhiBiQi_Init(void)
+{
+    u8 coin_dat[4] = {0};
+    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_BASIC_coin(STATUS_ZHI, NULL);      //发送状态指令0x31
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_EXP_coin(IDENTIFICATION_ZHI, NULL);      //发送扩展指令0x3700
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    Send_CMD_BASIC_coin(STACKER_ZHI, NULL);      //发送指令0x36
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
+    coin_dat[1] = 0x0F;     //纸币器可使用纸币类型B0~B3，1,5,10,20
+    coin_dat[2] = 0x00;
+    coin_dat[3] = 0x0F;     //使用暂保留功能
+    Send_CMD_BASIC_coin(BILL_TYPE_ZHI, coin_dat);      //发送指令0x34
+#if(FLAG_WAIT == 1)
+    delay_ms(10);
+#endif
+//    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
 
+    while(1)
+    {
+        Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
+        delay_ms(500);
+    }
+}
 
 
 

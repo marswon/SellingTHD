@@ -285,9 +285,9 @@ int main(void)
             u8 coin_dat[4] = {0};
             flag_test = 0;
             coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-            coin_dat[1] = 0x00;
+            coin_dat[1] = 0x0F;
             coin_dat[2] = 0x00;
-            coin_dat[3] = 0x03;
+            coin_dat[3] = 0x0F;
             Send_CMD_BASIC_coin(BILL_TYPE_ZHI, coin_dat);      //发送指令0x34
         }
         else if(flag_test == 0x1D)
@@ -315,6 +315,16 @@ int main(void)
         {
             flag_test = 0;
             Send_CMD_EXP_coin(IDENTIFICATION_ZHI2, NULL);      //发送扩展指令0x3702
+        }
+        else if(flag_test == 0x22)
+        {
+            flag_test = 0;
+            YingBiQi_Init();        //硬币器流程初始化
+        }
+        else if(flag_test == 0x23)
+        {
+            flag_test = 0;
+            ZhiBiQi_Init();        //纸币器流程初始化
         }
 
 //        else if(flag_test == 15)     //开启PC打印
