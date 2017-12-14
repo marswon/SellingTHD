@@ -3,7 +3,7 @@
 //硬币器，纸币器初始化，串口指令延时等待标志位
 #define FLAG_WAIT   1
 //硬币器延时时间，单位为ms
-#define TIME_DELAY_YING     5
+#define TIME_DELAY_YING     500
 
 //串口2收到的纸币器和硬币器回复信息，通过串口1打印出去
 u8 USART2_dat[50] = {0};
@@ -56,7 +56,7 @@ u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data)
 
     cmd = (0x01 << 8) | basic_cmd;  //对应模式位置1，表示地址字节
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_Send2Byte(USART1, cmd);   //PC调试，发送对应地址字节
+//    USART_Send2Byte(USART1, cmd);   //PC调试，发送对应地址字节
 
     if(dat_len != 0)    //常规指令对应数据区初始化及发送指令
     {
@@ -64,14 +64,14 @@ u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data)
         {
             dat[i] = data[i];
             USART_SendByte(USART2, dat[i]);     //发送基础指令数据区
-            USART_SendByte(USART1, dat[i]);     //PC调试，发送基础指令数据区
+//            USART_SendByte(USART1, dat[i]);     //PC调试，发送基础指令数据区
             num += dat[i];      //检验和
         }
     }
 
     cmd = basic_cmd + num;          //计算校验和
     USART_Send2Byte(USART2, cmd);           //发送CHK检验和
-    USART_Send2Byte(USART1, cmd);           //PC调试，发送CHK检验和
+//    USART_Send2Byte(USART1, cmd);           //PC调试，发送CHK检验和
     return 1;
 }
 
@@ -104,14 +104,14 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
     {
         cmd = (0x01 << 8) | 0x0F;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x0F
         USART_Send2Byte(USART2, cmd);       //发送对应地址字节
-        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
+//        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
     }
     else
     {
         //纸币器扩展指令
         cmd = (0x01 << 8) | 0x37;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x37
         USART_Send2Byte(USART2, cmd);       //发送对应地址字节
-        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
+//        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
     }
 
 //    if(IS_COIN_EXP_COMMAND_ZHI(exp_cmd) == 1)     //纸币器扩展指令
@@ -122,7 +122,7 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
 //    }
     cmd = (exp_cmd & 0xFF);             //副指令，实际测试结果不需要地址位置1
     USART_Send2Byte(USART2, cmd);       //发送副指令
-    USART_Send2Byte(USART1, cmd);       //PC调试，发送副指令
+//    USART_Send2Byte(USART1, cmd);       //PC调试，发送副指令
 
     if(dat_len != 0)    //扩展指令对应数据区初始化及发送指令
     {
@@ -130,14 +130,14 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
         {
             dat[i] = data[i];
             USART_SendByte(USART2, dat[i]);     //发送扩展数据区
-            USART_SendByte(USART1, dat[i]);     //PC调试，发送扩展数据区
+//            USART_SendByte(USART1, dat[i]);     //PC调试，发送扩展数据区
             num += dat[i];      //检验和
         }
     }
 
     cmd = (exp_cmd >> 0x08) + (exp_cmd & 0xFF) + num;       //计算校验和
     USART_SendByte(USART2, (u8) cmd);          //发送CHK检验和
-    USART_SendByte(USART1, (u8) cmd);          //PC调试，发送CHK检验和
+//    USART_SendByte(USART1, (u8) cmd);          //PC调试，发送CHK检验和
     return 1;
 }
 
@@ -161,60 +161,34 @@ void YingBiQi_Init(void)
     Send_CMD_BASIC_coin(STATUS_YING, NULL);      //发送硬币器状态指令
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_STATUS_YING + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_STATUS_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_STATUS_YING + 2] = 0X0A;
-    //打印STATUS_YING指令的回复，回复23个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_STATUS_YING + 3);  //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
+    delay_ms(1000);
     Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_IDENTIFICATION_YING + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_IDENTIFICATION_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_IDENTIFICATION_YING + 2] = 0X0A;
-    //打印IDENTIFICATION_YING指令的回复，回复33个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_IDENTIFICATION_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
     coin_dat[1] = 0x00;
     coin_dat[2] = 0x00;
     coin_dat[3] = 0x03;
     Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
+//    delay_ms(1000);
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
 #endif
     Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
+//    delay_ms(1000);
+//    delay_ms(1000);
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_TUBE_STATUS_YING + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_TUBE_STATUS_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_TUBE_STATUS_YING + 2] = 0X0A;
-    //打印TUBE_STATUS_YING指令的回复，回复18个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_TUBE_STATUS_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_POLL_YING + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_POLL_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_POLL_YING + 2] = 0X0A;
-    //打印POLL指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_POLL_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_EXP_coin(SEND_DIAGNOSTIC_YING, NULL);     //发送扩展指令0x0F05
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_SEND_DIAGNOSTIC_YING + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_SEND_DIAGNOSTIC_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_SEND_DIAGNOSTIC_YING + 2] = 0X0A;
-    //打印SEND_DIAGNOSTIC_YING指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_SEND_DIAGNOSTIC_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     coin_dat[0] = 0x00;
     coin_dat[1] = 0x03;
@@ -223,12 +197,18 @@ void YingBiQi_Init(void)
     Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //回复机器可用硬币类型
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_COIN_TYPE_YING + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_COIN_TYPE_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_COIN_TYPE_YING + 2] = 0X0A;
-    //打印DISPENSE指令的回复，回复1个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_COIN_TYPE_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+#endif
+    Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
+#if(FLAG_WAIT == 1)
+    delay_ms(TIME_DELAY_YING);
+#endif
+    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
+    coin_dat[1] = 0x00;
+    coin_dat[2] = 0x00;
+    coin_dat[3] = 0x03;
+    Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
+#if(FLAG_WAIT == 1)
+    delay_ms(TIME_DELAY_YING);
 #endif
 }
 
@@ -245,9 +225,10 @@ void YingBiQi_USE(void)
     while(1)
     {
         Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
+//        USART_SendByte(USART2, 0x00);       //ACK
 #if(FLAG_WAIT == 1)
         delay_ms(TIME_DELAY_YING);
-        USART2_COIN_BufCopy(USART2_dat, LEN_TUBE_STATUS_YING + 2);      //回复的信息和CHK检验和，多一个字节
+        USART2_COIN_BufCopy(USART2_dat, LEN_TUBE_STATUS_YING + 1);      //回复的信息和CHK检验和，多一个字节
         tmp_TUBE_YING = MAKEWORD(USART2_dat[0], USART2_dat[1]);         //缓存钱管满状态
         tmp1_05_TUBE_YING = USART2_dat[2];        //五角钱数量
         tmp1_10_TUBE_YING = USART2_dat[3];       //一元钱数量
@@ -257,7 +238,7 @@ void YingBiQi_USE(void)
         {
             num_05_YING++;       //5角硬币计数
             num_05_quehuo++;    //取货当次，投入5角的数量
-            printf("num_05_YING : %d num_05_quehuo : %d\r\n", num_05_YING, num_05_quehuo);      //输出5角数量
+//            printf("num_05_YING : %d num_05_quehuo : %d\r\n", num_05_YING, num_05_quehuo);      //输出5角数量
         }
 
 //        if(tmp > 0)      //前后一次5角的差值，与上面对比，避免出现前后增加多个的问题
@@ -272,7 +253,7 @@ void YingBiQi_USE(void)
         {
             num_10_YING++;       //1元硬币计数
             num_10_quehuo++;    //取货当次，投入1元的数量
-            printf("num_10_YING : %d num_10_quehuo : %d\r\n", num_10_YING, num_10_quehuo);    //输出1元数量
+//            printf("num_10_YING : %d num_10_quehuo : %d\r\n", num_10_YING, num_10_quehuo);    //输出1元数量
         }
 
 //        if(tmp > 0)      //前后一次一元的差值
@@ -283,21 +264,12 @@ void YingBiQi_USE(void)
 //        }
         tmp2_05_TUBE_YING = tmp1_05_TUBE_YING;          //缓存5角当前值
         tmp2_10_TUBE_YING = tmp1_10_TUBE_YING;          //缓存1元当前值
-        USART2_dat[LEN_TUBE_STATUS_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-        USART2_dat[LEN_TUBE_STATUS_YING + 2] = 0X0A;
-        //打印TUBE_STATUS_YING指令的回复，回复18个字节
-        USART_SendBytes(USART1, USART2_dat, LEN_TUBE_STATUS_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-        memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
+        delay_ms(1000);
         Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
+//        USART_SendByte(USART2, 0x00);       //ACK
 #if(FLAG_WAIT == 1)
         delay_ms(TIME_DELAY_YING);
-        USART2_COIN_BufCopy(USART2_dat, LEN_POLL_YING + 2);      //回复的信息和CHK检验和，多一个字节
-        USART2_dat[LEN_POLL_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-        USART2_dat[LEN_POLL_YING + 2] = 0X0A;
-        //打印POLL指令的回复，回复16个字节
-        USART_SendBytes(USART1, USART2_dat, LEN_POLL_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-        memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
         delay_ms(1000);
 
@@ -323,7 +295,7 @@ void YingBiQi_USE(void)
             {
                 //取货，投入金额不足，主控->安卓
                 Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), LBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), dat_quehuo, 2);     //主控->电机，取货
-                sprintf(strtmp, "USARTCMD_ZHUKON_ANZHUO_CoinNoEnough: %04X,%d-%d\r\n", USARTCMD_ZHUKON_ANZHUO_CoinNoEnough, dat_quehuo[0], dat_quehuo[1]);
+//                sprintf(strtmp, "USARTCMD_ZHUKON_ANZHUO_CoinNoEnough: %04X,%d-%d\r\n", USARTCMD_ZHUKON_ANZHUO_CoinNoEnough, dat_quehuo[0], dat_quehuo[1]);
                 USART_DEBUG(strtmp);
             }
         }

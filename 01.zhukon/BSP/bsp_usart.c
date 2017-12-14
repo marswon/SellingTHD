@@ -61,7 +61,14 @@ void USART1_IRQHandler(void)
         flag_test = nTemp;          //测试标志位
 //        printf("flag_test : %d \r\n", flag_test);        //打印标记调试位
         USART_BufferWrite(nTemp);
+
 //        USART_SendByte(USART1, nTemp);
+        if(flag_test == 5)     //发送0x0B
+        {
+            flag_test = 0;
+            Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
+            USART_SendByte(USART2, 0x00);       //ACK
+        }
     }
 
     if(USART_GetFlagStatus(USART1, USART_FLAG_ORE) == SET) //overflow

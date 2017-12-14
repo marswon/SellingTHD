@@ -27,7 +27,7 @@ int main(void)
     TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
-//    YingBiQi_Init();                //硬币器初始化
+    YingBiQi_Init();                //硬币器初始化
     memset(ndat, 0, sizeof(ndat));
     sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
     //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
@@ -45,8 +45,7 @@ int main(void)
 
     while(1)
     {
-        KEY_Scan(1);
-
+//        KEY_Scan(1);
         if(USART_BufferRead(&data) == 1)
         {
             if(start_flash_flag == 0)
@@ -164,18 +163,20 @@ int main(void)
         else if(flag_test == 0x0A)
         {
             flag_test = 0;
-            USART2_COIN_BufCopy(ntmp, LEN_POLL_YING + 2);      //回复的信息和CHK检验和，多一个字节
-            //打印POLL指令的回复，回复16个字节
-            USART_SendBytes(USART1, ntmp, LEN_POLL_YING + 2);   //打印串口2接受的纸币器和投币器回复信息
-            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+//            USART2_COIN_BufCopy(ntmp, LEN_POLL_YING + 2);      //回复的信息和CHK检验和，多一个字节
+//            //打印POLL指令的回复，回复16个字节
+//            USART_SendBytes(USART1, ntmp, LEN_POLL_YING + 2);   //打印串口2接受的纸币器和投币器回复信息
+//            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+            USART_SendByte(USART2, 0x00);       //ACK
         }
         else if(flag_test == 0x0B)
         {
             flag_test = 0;
-            USART2_COIN_BufCopy(ntmp, LEN_COIN_TYPE_YING + 2);      //回复的信息和CHK检验和，多一个字节
-            //打印COIN_TYPE指令的回复，回复4个字节
-            USART_SendBytes(USART1, ntmp, LEN_COIN_TYPE_YING + 2);   //打印串口2接受的纸币器和投币器回复信息
-            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+//            USART2_COIN_BufCopy(ntmp, LEN_COIN_TYPE_YING + 2);      //回复的信息和CHK检验和，多一个字节
+//            //打印COIN_TYPE指令的回复，回复4个字节
+//            USART_SendBytes(USART1, ntmp, LEN_COIN_TYPE_YING + 2);   //打印串口2接受的纸币器和投币器回复信息
+//            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+            USART_SendByte(USART2, 0xAA);       //RET
         }
         else if(flag_test == 0x0C)
         {
@@ -184,6 +185,7 @@ int main(void)
 //            //打印DISPENSE指令的回复，回复4个字节
 //            USART_SendBytes(USART1, ntmp, LEN_DISPENSE_YING + 2);   //打印串口2接受的纸币器和投币器回复信息
 //            memset(ntmp, 0, sizeof(ntmp));      //全部清零
+            USART_SendByte(USART2, 0xFF);       //NAK
         }
         else if(flag_test == 0x0D)
         {
