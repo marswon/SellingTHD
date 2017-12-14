@@ -25,27 +25,9 @@
 #define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
-//USART发送9位数据
-void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);
-
-void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
-void USART_SendBytes(USART_TypeDef* USARTx, uint8_t *str, uint8_t len);
-void USART_SendBytess(USART_TypeDef* USARTx, char *str);
-void USART_DEBUG(char *str);
-
-//串口2接收和发送
-void USART2_COIN_BufWrite(u8 ntemp);
-u8 USART2_COIN_BufRead(u8 *data);
-void USART2_COIN_BufCopy(u8 *str, u8 str_len);
-
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
 
-void USART_BufferWrite(u8 ntemp);
-u16 USART_BufferLength(void);
-u8 USART_BufferRead(u8 *data);
-void Send_CMD(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD);
-void Send_CMD_DAT(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD, char *dat, u16 dat_len);
 /***************************************************/
 #define UPDATE_FLAG_FLASH_ADDR             0x800BB80    //写入升级标志地址
 #define UPDATE_FLAG_FLASH_DATA             0xDDCCBBAA   //写入升级标志值
@@ -65,11 +47,11 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define ZHUKON_ANZHUO_NUMb2   0x013B//出货失败
 #define DIANJI_ZHUKON_NUMb2   0x023B//出货失败
 
-#define ZHUKON_ANZHUO_NUMb3   0x013C//取货失败
-#define DIANJI_ZHUKON_NUMb3   0x023C//取货失败
+//#define ZHUKON_ANZHUO_NUMb3   0x013C//取货失败
+//#define DIANJI_ZHUKON_NUMb3   0x023C//取货失败
 
-#define ZHUKON_ANZHUO_NUMb4   0x013D//取货成功
-#define DIANJI_ZHUKON_NUMb4   0x023D//取货成功
+//#define ZHUKON_ANZHUO_NUMb4   0x013D//取货成功
+//#define DIANJI_ZHUKON_NUMb4   0x023D//取货成功
 
 #define ZHUKON_ANZHUO_NUMb5   0x013E//售货机异常
 #define DIANJI_ZHUKON_NUMb5   0x023E//售货机异常
@@ -95,15 +77,12 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 //结束升级主控
 #define USARTCMD_ANDROID_ZHUKONG_StopUpdateZhukong      0x014E
 
-
 //准备升级电机
 #define USARTCMD_ANDROID_ZHUKONG_WillUpdateDianji       0x014F
 #define USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji        0x024F
-
 //开始升级电机
 #define USARTCMD_ANDROID_ZHUKONG_StartUpdateDianji      0x015E
 #define USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji       0x025E
-
 //停止升级电机
 #define USARTCMD_ANDROID_ZHUKONG_StopUpdateDianji       0x015A
 #define USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji        0x025A
@@ -111,9 +90,29 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 //读取电机版本
 #define USARTCMD_ANDROID_ZHUKONG_GetDianjiVer           0x014B
 #define USARTCMD_ZHUKONG_DIANJI_GetDianjiVer            0x024B
-
 //读取主控版本
 #define USARTCMD_ANDROID_ZHUKONG_GetZhukongVer          0x014A
+//投入金额不足，主控->安卓
+#define USARTCMD_ZHUKON_ANZHUO_CoinNoEnough             0x014A
+
+//USART发送9位数据
+void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);
+
+void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
+void USART_SendBytes(USART_TypeDef* USARTx, uint8_t *str, uint8_t len);
+void USART_SendBytess(USART_TypeDef* USARTx, char *str);
+void USART_DEBUG(char *str);
+
+//串口2接收和发送
+void USART2_COIN_BufWrite(u8 ntemp);
+u8 USART2_COIN_BufRead(u8 *data);
+void USART2_COIN_BufCopy(u8 *str, u8 str_len);
+
+void USART_BufferWrite(u8 ntemp);
+u16 USART_BufferLength(void);
+u8 USART_BufferRead(u8 *data);
+void Send_CMD(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD);
+void Send_CMD_DAT(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD, char *dat, u16 dat_len);
 
 #endif  //_BSP_USART_H
 

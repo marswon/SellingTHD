@@ -595,9 +595,14 @@
               <FilePath>..\..\BSP\bsp_yingbiqi.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_conf.h</FileName>
+              <FileName>bsp_zhibiqi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\bsp_zhibiqi.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_zhibiqi.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\stm32f10x_conf.h</FilePath>
+              <FilePath>..\..\BSP\bsp_zhibiqi.h</FilePath>
             </File>
           </Files>
         </Group>

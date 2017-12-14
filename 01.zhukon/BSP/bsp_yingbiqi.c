@@ -2,6 +2,27 @@
 
 //硬币器，纸币器初始化，串口指令延时等待标志位
 #define FLAG_WAIT   1
+//硬币器延时时间，单位为ms
+#define TIME_DELAY_YING     5
+
+//串口2收到的纸币器和硬币器回复信息，通过串口1打印出去
+u8 USART2_dat[50] = {0};
+
+/********************* 硬币器 ********************/
+u16 tmp_TUBE_YING = 0;      //硬币器钱管满状态缓存
+static u8 tmp1_05_TUBE_YING = 0;    //硬币器5角钱数量，当前次检测值
+static u8 tmp2_05_TUBE_YING = 0;    //硬币器5角钱数量，之前一次检测值
+static u8 tmp1_10_TUBE_YING = 0;   //硬币器1元钱数量，当前次检测值
+static u8 tmp2_10_TUBE_YING = 0;   //硬币器1元钱数量，之前一次检测值
+u8 num_05_YING = 0;     //投入5角的总数
+u8 num_10_YING = 0;    //投入1元的总数
+static u8 num_05_quehuo = 0;        //取货一次，投入的5角的数量
+static u8 num_10_quehuo = 0;       //取货一次，投入的1元的数量
+extern char dat_quehuo[2];        //缓存取货几行几列，用于硬币器使用
+extern bool flag_take_huowu;
+extern bool flag_chu_success;
+extern bool flag_chu_fail;
+
 
 //功能：发送常规命令函数
 //入口参数：basic_cmd为发送的常规命令字节，data为需要发送数据区常规指令的数据
@@ -120,38 +141,6 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
     return 1;
 }
 
-//功能：由扩展命令解析出需要的数据区长度
-//说明：返回值为需要的数据区长度值，出错返回FLAG_ERROR_EXP
-//u8 Get_len_EXP_coin(u16 exp_cmd)
-//{
-//    if(IDETIFICATION_EXP == exp_cmd)
-//    {
-//        return LEN_IDENTIFICATION_YING;
-//    }
-//    else if(FEATURE_ENABLE_YING == exp_cmd)
-//    {
-//        return LEN_FEATURE_ENABLE_YING;
-//    }
-//    else if(PAYOUT_YING == exp_cmd)
-//    {
-//        return LEN_PAYOUT_YING;
-//    }
-//    else if(PAYOUT_STATUS_YING == exp_cmd)
-//    {
-//        return LEN_PAYOUT_STATUS_YING;
-//    }
-//    else if(PAYOUT_VALUE_POLL_YING == exp_cmd)
-//    {
-//        return LEN_PAYOUT_VALUE_POLL_YING;
-//    }
-//    else if(SEND_DIAGNOSTIC_YING == exp_cmd)
-//    {
-//        return LEN_SEND_DIAGNOSTIC_YING;
-//    }
-//    else
-//        return FLAG_ERROR_EXP;  //自定义，值区别于其他的返回值
-//}
-
 //功能：发送带地址的多个命令函数
 //入口参数：cmd为发送命令的地址，len为命令长度
 //
@@ -167,15 +156,27 @@ void YingBiQi_Init(void)
     u8 coin_dat[4] = {0};
     Send_CMD_BASIC_coin(RESET_YING, NULL);      //发送复位指令
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
 #endif
     Send_CMD_BASIC_coin(STATUS_YING, NULL);      //发送硬币器状态指令
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
+    USART2_COIN_BufCopy(USART2_dat, LEN_STATUS_YING + 2);      //回复的信息和CHK检验和，多一个字节
+    USART2_dat[LEN_STATUS_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+    USART2_dat[LEN_STATUS_YING + 2] = 0X0A;
+    //打印STATUS_YING指令的回复，回复23个字节
+    USART_SendBytes(USART1, USART2_dat, LEN_STATUS_YING + 3);  //打印串口2接受的纸币器和投币器回复信息
+    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
+    USART2_COIN_BufCopy(USART2_dat, LEN_IDENTIFICATION_YING + 2);      //回复的信息和CHK检验和，多一个字节
+    USART2_dat[LEN_IDENTIFICATION_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+    USART2_dat[LEN_IDENTIFICATION_YING + 2] = 0X0A;
+    //打印IDENTIFICATION_YING指令的回复，回复33个字节
+    USART_SendBytes(USART1, USART2_dat, LEN_IDENTIFICATION_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
     coin_dat[1] = 0x00;
@@ -183,19 +184,37 @@ void YingBiQi_Init(void)
     coin_dat[3] = 0x03;
     Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
 #endif
     Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
+    USART2_COIN_BufCopy(USART2_dat, LEN_TUBE_STATUS_YING + 2);      //回复的信息和CHK检验和，多一个字节
+    USART2_dat[LEN_TUBE_STATUS_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+    USART2_dat[LEN_TUBE_STATUS_YING + 2] = 0X0A;
+    //打印TUBE_STATUS_YING指令的回复，回复18个字节
+    USART_SendBytes(USART1, USART2_dat, LEN_TUBE_STATUS_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
+    USART2_COIN_BufCopy(USART2_dat, LEN_POLL_YING + 2);      //回复的信息和CHK检验和，多一个字节
+    USART2_dat[LEN_POLL_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+    USART2_dat[LEN_POLL_YING + 2] = 0X0A;
+    //打印POLL指令的回复，回复16个字节
+    USART_SendBytes(USART1, USART2_dat, LEN_POLL_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_EXP_coin(SEND_DIAGNOSTIC_YING, NULL);     //发送扩展指令0x0F05
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
+    USART2_COIN_BufCopy(USART2_dat, LEN_SEND_DIAGNOSTIC_YING + 2);      //回复的信息和CHK检验和，多一个字节
+    USART2_dat[LEN_SEND_DIAGNOSTIC_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+    USART2_dat[LEN_SEND_DIAGNOSTIC_YING + 2] = 0X0A;
+    //打印SEND_DIAGNOSTIC_YING指令的回复，回复16个字节
+    USART_SendBytes(USART1, USART2_dat, LEN_SEND_DIAGNOSTIC_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     coin_dat[0] = 0x00;
     coin_dat[1] = 0x03;
@@ -203,58 +222,122 @@ void YingBiQi_Init(void)
     coin_dat[3] = 0xFF;
     Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //回复机器可用硬币类型
 #if(FLAG_WAIT == 1)
-    delay_ms(10);
+    delay_ms(TIME_DELAY_YING);
+    USART2_COIN_BufCopy(USART2_dat, LEN_COIN_TYPE_YING + 2);      //回复的信息和CHK检验和，多一个字节
+    USART2_dat[LEN_COIN_TYPE_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+    USART2_dat[LEN_COIN_TYPE_YING + 2] = 0X0A;
+    //打印DISPENSE指令的回复，回复1个字节
+    USART_SendBytes(USART1, USART2_dat, LEN_COIN_TYPE_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
+}
+
+//功能：硬币器工作
+//入口参数：
+//说明：硬币器要想检测硬币，必须循环发送指定指令。否则，机器不会检测硬币
+void YingBiQi_USE(void)
+{
+    u8 tmp = 0;     //暂存钱管钱数的差值
+    u16 num_coin = 0;   //投入钱币的金额
+    char strtmp[50] = {0};
+    u8 coin_dat[4] = {0};
 
     while(1)
     {
         Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
 #if(FLAG_WAIT == 1)
-        delay_ms(10);
+        delay_ms(TIME_DELAY_YING);
+        USART2_COIN_BufCopy(USART2_dat, LEN_TUBE_STATUS_YING + 2);      //回复的信息和CHK检验和，多一个字节
+        tmp_TUBE_YING = MAKEWORD(USART2_dat[0], USART2_dat[1]);         //缓存钱管满状态
+        tmp1_05_TUBE_YING = USART2_dat[2];        //五角钱数量
+        tmp1_10_TUBE_YING = USART2_dat[3];       //一元钱数量
+        tmp = tmp1_05_TUBE_YING - tmp2_05_TUBE_YING;        //5角钱前后的差值
+
+        if(1 == (tmp1_05_TUBE_YING - tmp2_05_TUBE_YING))      //前后一次5角的差值
+        {
+            num_05_YING++;       //5角硬币计数
+            num_05_quehuo++;    //取货当次，投入5角的数量
+            printf("num_05_YING : %d num_05_quehuo : %d\r\n", num_05_YING, num_05_quehuo);      //输出5角数量
+        }
+
+//        if(tmp > 0)      //前后一次5角的差值，与上面对比，避免出现前后增加多个的问题
+//        {
+//            num_05_YING = num_05_YING + tmp;       //5角硬币计数
+//            num_05_quehuo = num_05_quehuo + tmp;
+//            printf("num_05_YING : %d num_05_quehuo : %d\r\n", num_05_YING, num_05_quehuo);      //输出5角数量
+//        }
+        tmp = tmp1_10_TUBE_YING - tmp2_10_TUBE_YING;        //一元钱前后的差值
+
+        if(1 == (tmp1_10_TUBE_YING - tmp2_10_TUBE_YING))      //前后一次一元的差值
+        {
+            num_10_YING++;       //1元硬币计数
+            num_10_quehuo++;    //取货当次，投入1元的数量
+            printf("num_10_YING : %d num_10_quehuo : %d\r\n", num_10_YING, num_10_quehuo);    //输出1元数量
+        }
+
+//        if(tmp > 0)      //前后一次一元的差值
+//        {
+//            num_10_YING = num_10_YING + tmp;       //1元硬币计数
+//            num_10_quehuo = num_10_quehuo + tmp;
+//            printf("num_10_YING : %d num_10_quehuo : %d\r\n", num_10_YING, num_10_quehuo);    //输出1元数量
+//        }
+        tmp2_05_TUBE_YING = tmp1_05_TUBE_YING;          //缓存5角当前值
+        tmp2_10_TUBE_YING = tmp1_10_TUBE_YING;          //缓存1元当前值
+        USART2_dat[LEN_TUBE_STATUS_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+        USART2_dat[LEN_TUBE_STATUS_YING + 2] = 0X0A;
+        //打印TUBE_STATUS_YING指令的回复，回复18个字节
+        USART_SendBytes(USART1, USART2_dat, LEN_TUBE_STATUS_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+        memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
         Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+        USART2_COIN_BufCopy(USART2_dat, LEN_POLL_YING + 2);      //回复的信息和CHK检验和，多一个字节
+        USART2_dat[LEN_POLL_YING + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+        USART2_dat[LEN_POLL_YING + 2] = 0X0A;
+        //打印POLL指令的回复，回复16个字节
+        USART_SendBytes(USART1, USART2_dat, LEN_POLL_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+        memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+#endif
         delay_ms(1000);
+
+        if(flag_take_huowu == 1)        //安卓->主控，发送"取货"命令
+        {
+            num_coin = num_10_quehuo * 10 + num_05_quehuo * 5;      //当次投入的钱币的总额
+
+            if(num_coin >= 30)      //测试金额3元
+            {
+                flag_take_huowu = FALSE;    //判定该次取货完成
+                num_05_quehuo = 0;      //当次5角计数清零
+                num_10_quehuo = 0;      //当次1元计数清零
+                coin_dat[0] = 0x00;
+                coin_dat[1] = 0x00;
+                coin_dat[2] = 0xFF;
+                coin_dat[3] = 0xFF;
+                Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //发送"禁止收钱"指令
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), dat_quehuo, 2);     //主控->电机，取货
+                sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1]);
+                USART_DEBUG(strtmp);
+            }
+            else
+            {
+                //取货，投入金额不足，主控->安卓
+                Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), LBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), dat_quehuo, 2);     //主控->电机，取货
+                sprintf(strtmp, "USARTCMD_ZHUKON_ANZHUO_CoinNoEnough: %04X,%d-%d\r\n", USARTCMD_ZHUKON_ANZHUO_CoinNoEnough, dat_quehuo[0], dat_quehuo[1]);
+                USART_DEBUG(strtmp);
+            }
+        }
+
+        if(flag_chu_success == 1)       //出货成功
+        {
+            flag_chu_success = FALSE;
+            coin_dat[0] = 0x00;
+            coin_dat[1] = 0x03;
+            coin_dat[2] = 0xFF;
+            coin_dat[3] = 0xFF;
+            Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //发送"可收钱"指令
+        }
     }
 }
-
-//功能：纸币器初始化
-//入口参数：
-//说明：纸币器初始化函数，按照文档初始化流程
-void ZhiBiQi_Init(void)
-{
-    u8 coin_dat[4] = {0};
-    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-#if(FLAG_WAIT == 1)
-    delay_ms(10);
-#endif
-    Send_CMD_BASIC_coin(STATUS_ZHI, NULL);      //发送状态指令0x31
-#if(FLAG_WAIT == 1)
-    delay_ms(10);
-#endif
-    Send_CMD_EXP_coin(IDENTIFICATION_ZHI, NULL);      //发送扩展指令0x3700
-#if(FLAG_WAIT == 1)
-    delay_ms(10);
-#endif
-    Send_CMD_BASIC_coin(STACKER_ZHI, NULL);      //发送指令0x36
-#if(FLAG_WAIT == 1)
-    delay_ms(10);
-#endif
-    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-    coin_dat[1] = 0x0F;     //纸币器可使用纸币类型B0~B3，1,5,10,20
-    coin_dat[2] = 0x00;
-    coin_dat[3] = 0x0F;     //使用暂保留功能
-    Send_CMD_BASIC_coin(BILL_TYPE_ZHI, coin_dat);      //发送指令0x34
-#if(FLAG_WAIT == 1)
-    delay_ms(10);
-#endif
-//    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-
-    while(1)
-    {
-        Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-        delay_ms(500);
-    }
-}
-
 
 

@@ -1,18 +1,24 @@
 #include "bsp_common.h"
 
+//除了串口2，其他串口发送信息的缓存
 u8 UsartBuffer[USART_BUFFER_LEN] = {0}; //数据缓冲区
 u16 UsartWptr = 0;
 u16 UsartRptr = 0;
-
 //串口2对应纸币器，缓存纸币器回复的信息
 u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
 u8 Usart2Wptr = 0;
 u8 Usart2Rptr = 0;
 
+bool flag_chu_fail = FALSE;        //出货失败标志位，电机->主控，默认为0
+bool flag_chu_success = FALSE;     //出货成功标志位，电机->主控，默认为0
+bool flag_take_huowu = FALSE;       //取货标志位，安卓->主控，取货，对应标志位置一
 u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
+char dat_quehuo[2] = {0};     //缓存取货几行几列，用于硬币器使用
 
+
+//printf函数重定向到串口1
 #if 1
 #pragma import(__use_no_semihosting)
 //标准库需要的支持函数
@@ -24,7 +30,7 @@ struct __FILE
 
 FILE __stdout;
 //定义_sys_exit()以避免使用半主机模式
-_sys_exit(int x)
+void _sys_exit(int x)
 {
     x = x;
 }
@@ -472,9 +478,12 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         }
         else if(Data == ANZHUO_ZHUKON_HANGLIE)  // 取"x行y列"货,发送到电机板
         {
-            Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), Dat, 2);
-            sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1]);
-            USART_DEBUG(strtmp);
+//            Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), Dat, 2);
+//            sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1]);
+//            USART_DEBUG(strtmp);
+            flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
+            dat_quehuo[0] = *Dat;       //取货行号
+            dat_quehuo[1] = *(Dat + 1); //取货列号
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {
@@ -489,28 +498,30 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
     {
         if(Data == DIANJI_ZHUKON_NUMb1)//出货成功
         {
+            flag_chu_success = TRUE;       //电机->主控，出货成功，用于硬币器
             Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1));
             sprintf(strtmp, "ZHUKON_ANZHUO_NUMb1:%04X\r\n", ZHUKON_ANZHUO_NUMb1);
             USART_DEBUG(strtmp);
         }
         else if(Data == DIANJI_ZHUKON_NUMb2)//出货失败
         {
+            flag_chu_fail = TRUE;         //电机->主控，出货失败，用于硬币器
             Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2));
             sprintf(strtmp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
             USART_DEBUG(strtmp);
         }
-        else if(Data == DIANJI_ZHUKON_NUMb3)//取货失败
-        {
-            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb3), LBYTE(ZHUKON_ANZHUO_NUMb3));
-            sprintf(strtmp, "ZHUKON_ANZHUO_NUMb3:%04X\r\n", ZHUKON_ANZHUO_NUMb3);
-            USART_DEBUG(strtmp);
-        }
-        else if(Data == DIANJI_ZHUKON_NUMb4)//取货成功
-        {
-            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb4), LBYTE(ZHUKON_ANZHUO_NUMb4));
-            sprintf(strtmp, "ZHUKON_ANZHUO_NUMb4:%04X\r\n", ZHUKON_ANZHUO_NUMb4);
-            USART_DEBUG(strtmp);
-        }
+//        else if(Data == DIANJI_ZHUKON_NUMb3)//取货失败
+//        {
+//            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb3), LBYTE(ZHUKON_ANZHUO_NUMb3));
+//            sprintf(strtmp, "ZHUKON_ANZHUO_NUMb3:%04X\r\n", ZHUKON_ANZHUO_NUMb3);
+//            USART_DEBUG(strtmp);
+//        }
+//        else if(Data == DIANJI_ZHUKON_NUMb4)//取货成功
+//        {
+//            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb4), LBYTE(ZHUKON_ANZHUO_NUMb4));
+//            sprintf(strtmp, "ZHUKON_ANZHUO_NUMb4:%04X\r\n", ZHUKON_ANZHUO_NUMb4);
+//            USART_DEBUG(strtmp);
+//        }
         else if(Data == DIANJI_ZHUKON_NUMb5)//层反馈异常
         {
             Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb5), LBYTE(ZHUKON_ANZHUO_NUMb5));
