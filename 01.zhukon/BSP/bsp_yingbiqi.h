@@ -54,7 +54,7 @@
 #define     IS_COIN_EXP_COMMAND_ZHI(exp_cmd)   ((exp_cmd == IDENTIFICATION_ZHI) || (exp_cmd == FEATURE_ENABLE_ZHI) || (exp_cmd == IDENTIFICATION_ZHI2))
 
 //发送地址字节和CHK校验和
-u8 Send_CMD_BASIC_coin(u8 basic_cmd, u8 *data);
+u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data);
 //发送扩展命令函数，包括数据区
 u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data);
 //硬币器初始化
@@ -63,6 +63,24 @@ void YingBiQi_Init(void);
 void YingBiQi_USE(void);
 
 
+//功能：发送复位0X08指令
+void Send_RESET_YING(void);
+//功能：发送投币器参数指令0x09
+void Send_STATUS_YING(void);
+//功能：发送投币器参数指令0x0A
+void Send_TUBE_STATUS_YING(void);
+//功能：发送投币器参数指令0x0b
+void Send_POLL_YING(void);
+//功能：发送硬币类型0C0003FFFFh
+void Send_COIN_TYPE_YING(void);
+//功能：发送扩展指令0X0F00
+void Send_IDENTIFICATION_YING(void);
+//功能：发送扩展指令0X0F01和数据区
+void Send_FEATURE_ENABLE_YING(void);
+//功能：发送扩展指令0X0F05
+void Send_SEND_DIAGNOSTIC_YING(void);
+//功能：发送硬币类型0C0000FFFFh
+void Send_COIN_DISENABLE_YING(void);
 
 #endif
 

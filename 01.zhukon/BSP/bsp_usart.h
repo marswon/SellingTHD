@@ -114,6 +114,10 @@ u8 USART_BufferRead(u8 *data);
 void Send_CMD(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD);
 void Send_CMD_DAT(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD, char *dat, u16 dat_len);
 
+
+//软件复位操作
+void SoftwareRESET(void);
+
 #endif  //_BSP_USART_H
 
 

@@ -24,42 +24,42 @@ void ZhiBiQi_Init(void)
     Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_POLL_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_POLL_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_POLL_ZHI + 2] = 0X0A;
-    //打印POLL指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_POLL_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+//    USART2_COIN_BufCopy(USART2_dat, LEN_POLL_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
+//    USART2_dat[LEN_POLL_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+//    USART2_dat[LEN_POLL_ZHI + 2] = 0X0A;
+//    //打印POLL指令的回复，回复16个字节
+//    USART_SendBytes(USART1, USART2_dat, LEN_POLL_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
+//    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_BASIC_coin(STATUS_ZHI, NULL);      //发送状态指令0x31
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_STATUS_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_STATUS_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_STATUS_ZHI + 2] = 0X0A;
-    //打印POLL指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_POLL_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+//    USART2_COIN_BufCopy(USART2_dat, LEN_STATUS_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
+//    USART2_dat[LEN_STATUS_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+//    USART2_dat[LEN_STATUS_ZHI + 2] = 0X0A;
+//    //打印POLL指令的回复，回复16个字节
+//    USART_SendBytes(USART1, USART2_dat, LEN_POLL_YING + 3);   //打印串口2接受的纸币器和投币器回复信息
+//    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_EXP_coin(IDENTIFICATION_ZHI, NULL);      //发送扩展指令0x3700
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_IDENTIFICATION_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_IDENTIFICATION_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_IDENTIFICATION_ZHI + 2] = 0X0A;
-    //打印POLL指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_IDENTIFICATION_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+//    USART2_COIN_BufCopy(USART2_dat, LEN_IDENTIFICATION_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
+//    USART2_dat[LEN_IDENTIFICATION_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+//    USART2_dat[LEN_IDENTIFICATION_ZHI + 2] = 0X0A;
+//    //打印POLL指令的回复，回复16个字节
+//    USART_SendBytes(USART1, USART2_dat, LEN_IDENTIFICATION_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
+//    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     Send_CMD_BASIC_coin(STACKER_ZHI, NULL);      //发送指令0x36
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_STACKER_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_STACKER_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_STACKER_ZHI + 2] = 0X0A;
-    //打印POLL指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_STACKER_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+//    USART2_COIN_BufCopy(USART2_dat, LEN_STACKER_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
+//    USART2_dat[LEN_STACKER_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+//    USART2_dat[LEN_STACKER_ZHI + 2] = 0X0A;
+//    //打印POLL指令的回复，回复16个字节
+//    USART_SendBytes(USART1, USART2_dat, LEN_STACKER_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
+//    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
     coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
     coin_dat[1] = 0x0F;     //纸币器可使用纸币类型B0~B3，1,5,TIME_DELAY_YING,20
@@ -68,29 +68,28 @@ void ZhiBiQi_Init(void)
     Send_CMD_BASIC_coin(BILL_TYPE_ZHI, coin_dat);      //发送指令0x34
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
-    USART2_COIN_BufCopy(USART2_dat, LEN_BILL_TYPE_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
-    USART2_dat[LEN_BILL_TYPE_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-    USART2_dat[LEN_BILL_TYPE_ZHI + 2] = 0X0A;
-    //打印POLL指令的回复，回复16个字节
-    USART_SendBytes(USART1, USART2_dat, LEN_BILL_TYPE_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
-    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+//    USART2_COIN_BufCopy(USART2_dat, LEN_BILL_TYPE_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
+//    USART2_dat[LEN_BILL_TYPE_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+//    USART2_dat[LEN_BILL_TYPE_ZHI + 2] = 0X0A;
+//    //打印POLL指令的回复，回复16个字节
+//    USART_SendBytes(USART1, USART2_dat, LEN_BILL_TYPE_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
+//    memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
 #endif
 //    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-
-    while(1)
-    {
-        Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-        USART2_COIN_BufCopy(USART2_dat, LEN_POLL_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
-        USART2_dat[LEN_POLL_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
-        USART2_dat[LEN_POLL_ZHI + 2] = 0X0A;
-        //打印POLL指令的回复，回复16个字节
-        USART_SendBytes(USART1, USART2_dat, LEN_POLL_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
-        memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
-#endif
-        delay_ms(500);
-    }
+//    while(1)
+//    {
+//        Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
+//#if(FLAG_WAIT == 1)
+//        delay_ms(TIME_DELAY_YING);
+////        USART2_COIN_BufCopy(USART2_dat, LEN_POLL_ZHI + 2);      //回复的信息和CHK检验和，多一个字节
+////        USART2_dat[LEN_POLL_ZHI + 1] = 0X0D;     //用于刷新PC缓冲区，实现指令立即显示
+////        USART2_dat[LEN_POLL_ZHI + 2] = 0X0A;
+////        //打印POLL指令的回复，回复16个字节
+////        USART_SendBytes(USART1, USART2_dat, LEN_POLL_ZHI + 3);   //打印串口2接受的纸币器和投币器回复信息
+////        memset(USART2_dat, 0, sizeof(USART2_dat));      //全部清零
+//#endif
+//        delay_ms(500);
+//    }
 }
 
 //功能：纸币器工作
@@ -98,4 +97,6 @@ void ZhiBiQi_Init(void)
 //说明：纸币器要想检测纸币，必须循环发送指定指令。否则，机器不会检测纸币
 void ZhiBiQi_USE(void)
 {
+    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
+    delay_ms(500);
 }

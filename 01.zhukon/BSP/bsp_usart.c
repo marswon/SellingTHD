@@ -8,6 +8,8 @@ u16 UsartRptr = 0;
 u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
 u8 Usart2Wptr = 0;
 u8 Usart2Rptr = 0;
+extern u8 rev_data_len;        //串口2回复数据长度，用于没有收到数据继续发送
+extern u8 rev_data_0B;         //POLL指令接收到的数据必须是0B 0B才可以
 
 bool flag_chu_fail = FALSE;        //出货失败标志位，电机->主控，默认为0
 bool flag_chu_success = FALSE;     //出货成功标志位，电机->主控，默认为0
@@ -61,13 +63,21 @@ void USART1_IRQHandler(void)
         flag_test = nTemp;          //测试标志位
 //        printf("flag_test : %d \r\n", flag_test);        //打印标记调试位
         USART_BufferWrite(nTemp);
-
 //        USART_SendByte(USART1, nTemp);
-        if(flag_test == 5)     //发送0x0B
+        if(flag_test == 0xFE)
         {
             flag_test = 0;
-            Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
-            USART_SendByte(USART2, 0x00);       //ACK
+            SoftwareRESET();        //软件复位
+        }
+        if(flag_test == 0xFD)
+        {
+            flag_test = 0;
+            Send_COIN_TYPE_YING();        //发送硬币类型0C0003FFFFH
+        } 
+        if(flag_test == 0xFC)
+        {
+            flag_test = 0;
+            Send_COIN_DISENABLE_YING();        //发送硬币类型0C0000FFFFH
         }
     }
 
@@ -98,6 +108,7 @@ void USART2_IRQHandler(void)
         USART_ClearITPendingBit(USART2, USART_IT_RXNE); //clear flag
         /************************************************/
 //        USART_BufferWrite(nTemp);
+        rev_data_len++;     //硬币器回复数据计数
         USART2_COIN_BufWrite(nTemp);
         USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印
     }
@@ -617,6 +628,11 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
     }
 }
 
-
+//软件复位操作
+void SoftwareRESET(void)
+{
+    __set_FAULTMASK(1);     // 关闭所有中端
+    NVIC_SystemReset();     //软件复位
+}
 
 
