@@ -63,24 +63,37 @@ void YingBiQi_Init(void);
 void YingBiQi_USE(void);
 
 
+/***************************************************************************************************/
+
+//单独每条指令使用一个函数
+
 //功能：发送复位0X08指令
 void Send_RESET_YING(void);
 //功能：发送投币器参数指令0x09
 void Send_STATUS_YING(void);
 //功能：发送投币器参数指令0x0A
 void Send_TUBE_STATUS_YING(void);
-//功能：发送投币器参数指令0x0b
+//功能：发送投币器参数指令0x0B
 void Send_POLL_YING(void);
-//功能：发送硬币类型0C0003FFFFh
-void Send_COIN_TYPE_YING(void);
+//功能：发送硬币类型0C0003FFFFh，使能收钱
+void Send_COIN_ENABLE_YING(void);
+//功能：发送硬币类型0C0000FFFFh，禁止收钱
+void Send_COIN_DISENABLE_YING(void);
+//功能：发送支出的硬币类型指令0DH
+void Send_DISPENSE_YING(u8 dat);
 //功能：发送扩展指令0X0F00
 void Send_IDENTIFICATION_YING(void);
 //功能：发送扩展指令0X0F01和数据区
 void Send_FEATURE_ENABLE_YING(void);
+//功能：发送扩展指令0X0F02和数据区
+void Send_PAYOUT_YING(u8 dat);
+//功能：发送扩展指令0X0F03
+void Send_PAYOUT_STATUS_YING(void);
+//功能：发送扩展指令0X0F04
+void Send_PAYOUT_VALUE_POLL_YING(void);
 //功能：发送扩展指令0X0F05
 void Send_SEND_DIAGNOSTIC_YING(void);
-//功能：发送硬币类型0C0000FFFFh
-void Send_COIN_DISENABLE_YING(void);
+
 
 #endif
 

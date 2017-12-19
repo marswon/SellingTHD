@@ -266,7 +266,6 @@ void RUN_Init(void)
 //说明：串口2对应的USART2，通过选择器分为四路输出，通过PA0和PA1引脚组合可以选择输出的线路。
 void USART2_select(u8 mode)
 {
-//    assert_param(IS_USART2_SELECT(mode));     //参数校验，只有四种模式，没有用实际上
     switch(mode)
     {
         case 0:     //USART2连接纸币器、硬币器
