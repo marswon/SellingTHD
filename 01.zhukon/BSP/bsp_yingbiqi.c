@@ -26,10 +26,10 @@ extern bool flag_chu_success;
 extern bool flag_chu_fail;
 
 
-//功能：发送常规命令函数
+//功能：发送常规命令函数，适用于纸币器和硬币器
 //入口参数：basic_cmd为发送的常规命令字节，data为需要发送数据区常规指令的数据
 //返回值：正常返回1，异常返回0
-//说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址。命令后，接着CHK检验和
+//说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址。命令后，接着CHK检验和。
 u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data)
 {
     u16 cmd = 0;
@@ -80,7 +80,7 @@ u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data)
     return 1;
 }
 
-//功能：发送扩展命令函数
+//功能：发送扩展命令函数，适用于纸币器和硬币器
 //入口参数：exp_cmd为发送的扩展命令字节，data为需要发送数据区扩展指令的数据
 //说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址
 u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
@@ -98,11 +98,11 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
     //根据扩展指令设置数据区长度
     if((FEATURE_ENABLE_YING == exp_cmd) || (FEATURE_ENABLE_ZHI == exp_cmd))
     {
-        dat_len = DAT_FEATURE_ENABLE_YING;
+        dat_len = DAT_FEATURE_ENABLE_YING;    //VMC数据长度为4
     }
     else if(PAYOUT_YING == exp_cmd)
     {
-        dat_len = DAT_PAYOUT_YING;
+        dat_len = DAT_PAYOUT_YING;    //VMC数据长度为1
     }
 
     if(IS_COIN_EXP_COMMAND_YING(exp_cmd) == 1)     //硬币器扩展指令
@@ -144,13 +144,6 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
     USART_SendByte(USART2, (u8) cmd);          //发送CHK检验和
     USART_SendByte(USART1, (u8) cmd);          //PC调试，发送CHK检验和
     return 1;
-}
-
-//功能：发送带地址的多个命令函数
-//入口参数：cmd为发送命令的地址，len为命令长度
-//
-void Send_CMD_coin(u8 *cmd, u8 len)
-{
 }
 
 //功能：硬币器初始化
@@ -220,11 +213,11 @@ void Send_CMD_coin(u8 *cmd, u8 len)
 
 void YingBiQi_Init(void)
 {
-    Send_RESET_YING();      //发送复位指令
+    Send_RESET_YING();      //发送复位指令08H
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
 #endif
-    Send_STATUS_YING();      //发送硬币器状态指令
+    Send_STATUS_YING();      //发送硬币器状态指令09H
 #if(FLAG_WAIT == 1)
     delay_ms(TIME_DELAY_YING);
 #endif
@@ -247,7 +240,7 @@ void YingBiQi_Init(void)
     }
 
 //    Send_FEATURE_ENABLE_YING();     //发送扩展指令0x0F01和数据区
-    
+
     while(1)
     {
         Send_FEATURE_ENABLE_YING();     //发送扩展指令0x0F01和数据区
@@ -279,6 +272,7 @@ void YingBiQi_Init(void)
 
         rev_data_len = 0;   //清零，记录下一条指令回复的长度
     }
+
     while(1)
     {
         Send_POLL_YING();    //回复机器动作类型0x0B
@@ -313,10 +307,11 @@ void YingBiQi_Init(void)
 
     while(1)
     {
-        Send_COIN_TYPE_YING();    //回复机器可用硬币类型0C0003FFFFh
+        Send_COIN_ENABLE_YING();    //回复机器可用硬币类型0C0003FFFFh
 #if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_YING);
+        delay_ms(TIME_DELAY_YING);
 #endif
+
         if(rev_data_len > 0)       //判断接受的数据长度
         {
             rev_data_len = 0;   //清零，记录下一条指令回复的长度
@@ -449,7 +444,6 @@ void YingBiQi_USE(void)
             Send_TUBE_STATUS_YING();    //发送钱管状态指令0x0A，回复剩余各个钱管状态
 #if(FLAG_WAIT == 1)
             delay_ms(TIME_DELAY_YING);
-
 #endif
 
             if(rev_data_len == (LEN_TUBE_STATUS_YING + 1))       //判断接受的数据长度
@@ -471,13 +465,11 @@ void YingBiQi_USE(void)
 ////            delay_ms(1000);
 ////            delay_ms(500);
 //#endif
-
 //            if(rev_data_len > 0)       //判断接受的数据长度
 //            {
 //                rev_data_len = 0;   //清零，记录下一条指令回复的长度
 //                break;
 //            }
-
 //            rev_data_len = 0;   //清零，记录下一条指令回复的长度
 //        }
 //        delay_ms(1000);
@@ -489,19 +481,17 @@ void YingBiQi_USE(void)
 //            delay_ms(TIME_DELAY_YING);
 ////            delay_ms(20);
 //#endif
-
 //            if(rev_data_len >= 3)       //判断接受的数据长度
 //            {
 //                rev_data_len = 0;   //清零，记录下一条指令回复的长度
 //                break;
 //            }
-
 //            rev_data_len = 0;   //清零，记录下一条指令回复的长度
 //        }
-
 //        delay_ms(1000);     //间隔1s发送0x0A和0x0B
     }
 }
+
 
 //功能：发送复位0X08指令
 void Send_RESET_YING(void)
@@ -529,7 +519,7 @@ void Send_TUBE_STATUS_YING(void)
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
     USART_Send2Byte(USART2, 0X0A);           //发送CHK检验和
 }
-//功能：发送投币器参数指令0x0b
+//功能：发送投币器参数指令0x0B
 void Send_POLL_YING(void)
 {
     u16 cmd = 0;
@@ -537,8 +527,8 @@ void Send_POLL_YING(void)
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
     USART_Send2Byte(USART2, 0X0B);           //发送CHK检验和
 }
-//功能：发送硬币类型0C0003FFFFh
-void Send_COIN_TYPE_YING(void)
+//功能：发送硬币类型0C0003FFFFh，使能收钱
+void Send_COIN_ENABLE_YING(void)
 {
     u16 cmd = 0;
     u8 coin_dat[4] = {0};
@@ -553,6 +543,35 @@ void Send_COIN_TYPE_YING(void)
     USART_SendBytes(USART2, coin_dat, 4);
     USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
+
+//功能：发送硬币类型0C0000FFFFh，禁止收钱
+void Send_COIN_DISENABLE_YING(void)
+{
+    u16 cmd = 0;
+    u8 coin_dat[4] = {0};
+    u8 num = 0;     //数据区总和
+    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
+    coin_dat[1] = 0x00;
+    coin_dat[2] = 0xff;
+    coin_dat[3] = 0xff;
+    num = (u8)(0x0c + 0x03 + 0xff + 0xff);
+    cmd = (0x01 << 8) | 0x0c;  //对应模式位置1，表示地址字节
+    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+    USART_SendBytes(USART2, coin_dat, 4);
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
+}
+//功能：发送支出的硬币类型指令0DH
+void Send_DISPENSE_YING(u8 dat)
+{
+    u16 cmd = 0;
+    u8 num = 0;     //数据区总和
+    num = (u8)(0x0d + dat);
+    cmd = (0x01 << 8) | 0x0D;  //对应模式位置1，表示地址字节
+    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+    USART_Send2Byte(USART2, dat);   //发送数据，对应支出硬币的类型和数值
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
+}
+
 //功能：发送扩展指令0X0F00
 void Send_IDENTIFICATION_YING(void)
 {
@@ -581,6 +600,41 @@ void Send_FEATURE_ENABLE_YING(void)
     USART_SendBytes(USART2, coin_dat, 4);
     USART_SendByte(USART2, num);           //发送CHK检验和
 }
+//功能：发送扩展指令0X0F02和数据区
+void Send_PAYOUT_YING(u8 dat)
+{
+    u16 cmd = 0;
+    u8 num = 0;     //数据区总和
+    num = (u8)(0x0F + 0x02 + dat);
+    cmd = (0x01 << 8) | 0x0F;  //对应模式位置1，表示地址字节
+    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+    USART_Send2Byte(USART2, 0X02);           //发送副指令
+    USART_Send2Byte(USART2, dat);   //发送数据，对应支出硬币的数值
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
+}
+
+//功能：发送扩展指令0X0F03
+void Send_PAYOUT_STATUS_YING(void)
+{
+    u16 cmd = 0;
+    u8 num = 0;     //数据区总和
+    num = 0x0f + 0x03;
+    cmd = (0x01 << 8) | 0x0f;  //对应模式位置1，表示地址字节
+    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+    USART_Send2Byte(USART2, 0X03);           //发送副指令
+    USART_SendByte(USART2, num);           //发送CHK检验和
+}
+//功能：发送扩展指令0X0F04
+void Send_PAYOUT_VALUE_POLL_YING(void)
+{
+    u16 cmd = 0;
+    u8 num = 0;     //数据区总和
+    num = 0x0f + 0x04;
+    cmd = (0x01 << 8) | 0x0f;  //对应模式位置1，表示地址字节
+    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+    USART_Send2Byte(USART2, 0X04);           //发送副指令
+    USART_SendByte(USART2, num);           //发送CHK检验和
+}
 //功能：发送扩展指令0X0F05
 void Send_SEND_DIAGNOSTIC_YING(void)
 {
@@ -593,20 +647,5 @@ void Send_SEND_DIAGNOSTIC_YING(void)
     USART_SendByte(USART2, num);           //发送CHK检验和
 }
 
-//功能：发送硬币类型0C0003FFFFh
-void Send_COIN_DISENABLE_YING(void)
-{
-    u16 cmd = 0;
-    u8 coin_dat[4] = {0};
-    u8 num = 0;     //数据区总和
-    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-    coin_dat[1] = 0x00;
-    coin_dat[2] = 0xff;
-    coin_dat[3] = 0xff;
-    num = (u8)(0x0c + 0x03 + 0xff + 0xff);
-    cmd = (0x01 << 8) | 0x0c;  //对应模式位置1，表示地址字节
-    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_SendBytes(USART2, coin_dat, 4);
-    USART_Send2Byte(USART2, num);           //发送CHK检验和
-}
+
 
