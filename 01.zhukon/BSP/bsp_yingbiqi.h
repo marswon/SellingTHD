@@ -53,6 +53,8 @@
 //发送扩展指令校验，判断纸币器
 #define     IS_COIN_EXP_COMMAND_ZHI(exp_cmd)   ((exp_cmd == IDENTIFICATION_ZHI) || (exp_cmd == FEATURE_ENABLE_ZHI) || (exp_cmd == IDENTIFICATION_ZHI2))
 
+
+
 //发送地址字节和CHK校验和
 u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data);
 //发送扩展命令函数，包括数据区
@@ -94,6 +96,38 @@ void Send_PAYOUT_VALUE_POLL_YING(void);
 //功能：发送扩展指令0X0F05
 void Send_SEND_DIAGNOSTIC_YING(void);
 
+
+//功能：发送复位0X08指令并校验返回值
+void DET_RESET_YING(void);
+//功能：发送投币器参数指令0x09并校验返回值
+void DET_STATUS_YING(void);
+//功能：发送投币器参数指令0x0A并校验返回值
+void DET_TUBE_STATUS_YING(void);
+//功能：发送投币器参数指令0x0B并校验返回值
+void DET_POLL_YING(void);
+//功能：发送硬币类型0C0003FFFFh，使能收钱并校验返回值
+void DET_COIN_ENABLE_YING(void);
+//功能：发送硬币类型0C0000FFFFh，禁止收钱
+void DET_COIN_DISENABLE_YING(void);
+//功能：发送支出的硬币类型指令0DH
+void DET_DISPENSE_YING(u8 dat);
+//功能：发送扩展指令0X0F00
+void DET_IDENTIFICATION_YING(void);
+//功能：发送扩展指令0X0F01和数据区
+void DET_FEATURE_ENABLE_YING(void);
+//功能：发送扩展指令0X0F02和数据区
+void DET_PAYOUT_YING(u8 dat);
+//功能：发送扩展指令0X0F03
+void DET_PAYOUT_STATUS_YING(void);
+//功能：发送扩展指令0X0F04
+void DET_PAYOUT_VALUE_POLL_YING(void);
+//功能：发送扩展指令0X0F05
+void DET_SEND_DIAGNOSTIC_YING(void);
+
+
+extern bool EN_send_0B;
+extern bool EN_send_0F05;
+extern u8 rev_data_len;        //串口2回复数据长度，用于没有收到数据继续发送
 
 #endif
 

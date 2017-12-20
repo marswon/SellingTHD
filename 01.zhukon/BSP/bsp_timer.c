@@ -42,6 +42,7 @@ void TIM2_IRQHandler(void)   //TIM2中断
     if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)  //检查指定的TIM中断发生与否:TIM 中断源
     {
         TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+        YingBiQi_USE();         //时间控制，循环发送0A和0B指令
     }
 }
 

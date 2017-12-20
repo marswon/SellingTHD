@@ -5,25 +5,27 @@
 //硬币器延时时间，单位为ms
 #define TIME_DELAY_YING     100
 
+bool EN_send_0B = FALSE;        //发送0B标志位，用于判断接收内容
+bool EN_send_0F05 = FALSE;        //发送0x0F05标志位，用于判断接收内容
 //串口2收到的纸币器和硬币器回复信息，通过串口1打印出去
 u8 USART2_dat[50] = {0};
 u8 rev_data_len = 0;        //串口2回复数据长度，用于没有收到数据继续发送
 //u8 rev_data_0B = 0;         //POLL指令接收到的数据必须是0B 0B才可以
 
 /********************* 硬币器 ********************/
-u16 tmp_TUBE_YING = 0;      //硬币器钱管满状态缓存
+//u16 tmp_TUBE_YING = 0;      //硬币器钱管满状态缓存
 //static u8 tmp1_05_TUBE_YING = 0;    //硬币器5角钱数量，当前次检测值
 //static u8 tmp2_05_TUBE_YING = 0;    //硬币器5角钱数量，之前一次检测值
 //static u8 tmp1_10_TUBE_YING = 0;   //硬币器1元钱数量，当前次检测值
 //static u8 tmp2_10_TUBE_YING = 0;   //硬币器1元钱数量，之前一次检测值
-u8 num_05_YING = 0;     //投入5角的总数
-u8 num_10_YING = 0;    //投入1元的总数
+//u8 num_05_YING = 0;     //投入5角的总数
+//u8 num_10_YING = 0;    //投入1元的总数
 //static u8 num_05_quehuo = 0;        //取货一次，投入的5角的数量
 //static u8 num_10_quehuo = 0;       //取货一次，投入的1元的数量
-extern char dat_quehuo[2];        //缓存取货几行几列，用于硬币器使用
-extern bool flag_take_huowu;
-extern bool flag_chu_success;
-extern bool flag_chu_fail;
+//extern char dat_quehuo[2];        //缓存取货几行几列，用于硬币器使用
+//extern bool flag_take_huowu;
+//extern bool flag_chu_success;
+//extern bool flag_chu_fail;
 
 
 //功能：发送常规命令函数，适用于纸币器和硬币器
@@ -213,124 +215,14 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
 
 void YingBiQi_Init(void)
 {
-    Send_RESET_YING();      //发送复位指令08H
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_YING);
-#endif
-    Send_STATUS_YING();      //发送硬币器状态指令09H
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_YING);
-#endif
-    rev_data_len = 0;   //清零，记录下一条指令回复的长度
-
-    while(1)
-    {
-        Send_IDENTIFICATION_YING();     //发送扩展指令0x0F00
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-#endif
-
-        if(rev_data_len == (LEN_IDENTIFICATION_YING + 1))       //判断接受的数据长度
-        {
-            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-            break;
-        }
-
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-    }
-
-//    Send_FEATURE_ENABLE_YING();     //发送扩展指令0x0F01和数据区
-
-    while(1)
-    {
-        Send_FEATURE_ENABLE_YING();     //发送扩展指令0x0F01和数据区
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-#endif
-
-        if(rev_data_len > 0)       //判断接受的数据长度
-        {
-            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-            break;
-        }
-
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-    }
-
-    while(1)
-    {
-        Send_TUBE_STATUS_YING();    //发送钱管状态指令0x0A，回复剩余各个钱管状态
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-#endif
-
-        if(rev_data_len == (LEN_TUBE_STATUS_YING + 1))       //判断接受的数据长度
-        {
-            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-            break;
-        }
-
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-    }
-
-    while(1)
-    {
-        Send_POLL_YING();    //回复机器动作类型0x0B
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-#endif
-
-        if(rev_data_len > 0)       //判断接受的数据长度
-        {
-            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-            break;
-        }
-
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-    }
-
-    while(1)
-    {
-        Send_SEND_DIAGNOSTIC_YING();     //发送扩展指令0x0F05
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-#endif
-
-        if(rev_data_len >= 3)       //判断接受的数据长度
-        {
-            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-            break;
-        }
-
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-    }
-
-    while(1)
-    {
-        Send_COIN_ENABLE_YING();    //回复机器可用硬币类型0C0003FFFFh
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_YING);
-#endif
-
-        if(rev_data_len > 0)       //判断接受的数据长度
-        {
-            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-            break;
-        }
-
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-    }
-
-//    Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
-//
-//#if(FLAG_WAIT == 1)
-//    delay_ms(TIME_DELAY_YING);
-//#endif
-//    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-//    coin_dat[1] = 0x00;
-//    coin_dat[2] = 0x00;
-//    coin_dat[3] = 0x03;
-//    Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
+    DET_RESET_YING();
+    DET_POLL_YING();
+    DET_STATUS_YING();
+    DET_IDENTIFICATION_YING();
+    DET_FEATURE_ENABLE_YING();
+    DET_TUBE_STATUS_YING();
+    DET_SEND_DIAGNOSTIC_YING();
+    DET_COIN_ENABLE_YING();
 }
 
 //功能：硬币器工作
@@ -435,61 +327,345 @@ void YingBiQi_Init(void)
 
 void YingBiQi_USE(void)
 {
+    DET_TUBE_STATUS_YING();
+    delay_ms(10);
+    DET_POLL_YING();
+    delay_ms(10);
+//    DET_SEND_DIAGNOSTIC_YING();
+//    delay_ms(10);
+}
+
+//功能：发送复位0X08指令并校验返回值
+void DET_RESET_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
     while(1)
     {
-        rev_data_len = 0;   //清零，记录下一条指令回复的长度
-
-        while(1)
-        {
-            Send_TUBE_STATUS_YING();    //发送钱管状态指令0x0A，回复剩余各个钱管状态
+        Send_RESET_YING();      //发送复位指令08H
 #if(FLAG_WAIT == 1)
-            delay_ms(TIME_DELAY_YING);
+        delay_ms(TIME_DELAY_YING);
 #endif
 
-            if(rev_data_len == (LEN_TUBE_STATUS_YING + 1))       //判断接受的数据长度
-            {
-                rev_data_len = 0;   //清零，记录下一条指令回复的长度
-                break;
-            }
-
+        if(rev_data_len > 0)       //判断接受的数据长度
+        {
             rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
         }
 
-        delay_ms(1000);
-//        delay_ms(500);
-//        while(1)
-//        {
-//            Send_POLL_YING();    //回复机器动作类型0x0B
-//#if(FLAG_WAIT == 1)
-//            delay_ms(TIME_DELAY_YING);
-////            delay_ms(1000);
-////            delay_ms(500);
-//#endif
-//            if(rev_data_len > 0)       //判断接受的数据长度
-//            {
-//                rev_data_len = 0;   //清零，记录下一条指令回复的长度
-//                break;
-//            }
-//            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-//        }
-//        delay_ms(1000);
-//        delay_ms(500);
-//        while(1)
-//        {
-//            Send_SEND_DIAGNOSTIC_YING();     //发送扩展指令0x0F05
-//#if(FLAG_WAIT == 1)
-//            delay_ms(TIME_DELAY_YING);
-////            delay_ms(20);
-//#endif
-//            if(rev_data_len >= 3)       //判断接受的数据长度
-//            {
-//                rev_data_len = 0;   //清零，记录下一条指令回复的长度
-//                break;
-//            }
-//            rev_data_len = 0;   //清零，记录下一条指令回复的长度
-//        }
-//        delay_ms(1000);     //间隔1s发送0x0A和0x0B
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
     }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+
+//功能：发送投币器参数指令0x09并校验返回值
+void DET_STATUS_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_STATUS_YING();      //发送硬币器状态指令09H
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == (LEN_STATUS_YING + 1))       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送投币器参数指令0x0A并校验返回值
+void DET_TUBE_STATUS_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_TUBE_STATUS_YING();    //发送钱管状态指令0x0A，回复剩余各个钱管状态
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == (LEN_TUBE_STATUS_YING + 1))       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送投币器参数指令0x0B并校验返回值
+void DET_POLL_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    EN_send_0B = TRUE;
+
+    while(1)
+    {
+        Send_POLL_YING();    //回复机器动作类型0x0B
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+//        if(rev_data_len > 0)       //判断接受的数据长度
+        if(REV_0B_YING == 1)    //接收到0B 0B
+        {
+            REV_0B_YING = 0;
+//            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        if(REV_0B_YING == 2)    //接收到ACK
+        {
+            REV_0B_YING = 0;
+//            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        if(rev_data_len > 0)       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    return;
+}
+
+//功能：发送硬币类型0C0003FFFFh，使能收钱并校验返回值
+void DET_COIN_ENABLE_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_COIN_ENABLE_YING();    //回复机器可用硬币类型0C0003FFFFh
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == 1)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送硬币类型0C0000FFFFh，禁止收钱
+void DET_COIN_DISENABLE_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_COIN_DISENABLE_YING();    //回复机器可用硬币类型0C0000FFFFh
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == 1)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送支出的硬币类型指令0DH
+void DET_DISPENSE_YING(u8 dat)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_DISPENSE_YING(dat);        //支出硬币个数
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == 1)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送扩展指令0X0F00
+void DET_IDENTIFICATION_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_IDENTIFICATION_YING();     //发送扩展指令0x0F00
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == (LEN_IDENTIFICATION_YING + 1))       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送扩展指令0X0F01和数据区
+void DET_FEATURE_ENABLE_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_FEATURE_ENABLE_YING();     //发送扩展指令0x0F01和数据区
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送扩展指令0X0F02和数据区
+//说明：待测试，文档上标注无返回数据
+void DET_PAYOUT_YING(u8 dat)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_PAYOUT_YING(dat);     //发送扩展指令0x0F02和数据区
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == 1)       //判断接受的数据长度,测试是否返回接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送扩展指令0X0F03
+void DET_PAYOUT_STATUS_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_PAYOUT_STATUS_YING();     //发送扩展指令0x0F03
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == (LEN_PAYOUT_STATUS_YING + 1))       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送扩展指令0X0F04
+void DET_PAYOUT_VALUE_POLL_YING(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_PAYOUT_VALUE_POLL_YING();     //发送扩展指令0x0F04
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+        if(rev_data_len == (LEN_PAYOUT_VALUE_POLL_YING + 1))       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送扩展指令0X0F05
+void DET_SEND_DIAGNOSTIC_YING(void)
+{
+    while(1)
+    {
+        EN_send_0F05 = TRUE;          //使能0F05发送标志位，用于判断接收的内容
+        Send_SEND_DIAGNOSTIC_YING();     //发送扩展指令0x0F05
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_YING);
+#endif
+
+//        if(rev_data_len >= 3)       //判断接受的数据长度
+        if(REV_0F05_YING == 3)       //判断接受的数据为03 00 03
+        {
+//            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            REV_0F05_YING = 0;   //清零
+            break;
+        }
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    return;
 }
 
 
@@ -497,35 +673,44 @@ void YingBiQi_USE(void)
 void Send_RESET_YING(void)
 {
     u16 cmd = 0;
+    u8 num = 0;     //数据区总和
     cmd = (0x01 << 8) | 0x08;  //对应模式位置1，表示地址字节
+    num = 0X08;
+    rev_data_len = 0;   // 清零，记录下一条指令回复的长度
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_Send2Byte(USART2, 0X08);           //发送CHK检验和
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
 
 //功能：发送投币器参数指令0x09
 void Send_STATUS_YING(void)
 {
     u16 cmd = 0;
+    u8 num = 0;     //数据区总和
     cmd = (0x01 << 8) | 0x09;  //对应模式位置1，表示地址字节
+    num = 0X09;
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_Send2Byte(USART2, 0X09);           //发送CHK检验和
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
 
 //功能：发送投币器参数指令0x0A
 void Send_TUBE_STATUS_YING(void)
 {
     u16 cmd = 0;
+    u8 num = 0;     //数据区总和
     cmd = (0x01 << 8) | 0x0A;  //对应模式位置1，表示地址字节
+    num = 0X0A;
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_Send2Byte(USART2, 0X0A);           //发送CHK检验和
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
 //功能：发送投币器参数指令0x0B
 void Send_POLL_YING(void)
 {
     u16 cmd = 0;
+    u8 num = 0;     //数据区总和
     cmd = (0x01 << 8) | 0x0B;  //对应模式位置1，表示地址字节
+    num = 0X0B;
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_Send2Byte(USART2, 0X0B);           //发送CHK检验和
+    USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
 //功能：发送硬币类型0C0003FFFFh，使能收钱
 void Send_COIN_ENABLE_YING(void)

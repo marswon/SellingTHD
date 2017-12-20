@@ -1,6 +1,7 @@
 #ifndef _BSP_USART_H
 #define _BSP_USART_H
 #include "stm32f10x_conf.h"
+#include "bsp_common.h"
 
 /***************************************************/
 //串口接收队列缓存长度
@@ -25,6 +26,8 @@
 #define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
+extern u8 REV_0B_YING;          //硬币器发送0B后，接收到内容标志位，默认为0
+extern u8 REV_0F05_YING;          //硬币器发送0F05后，接收到内容标志位，默认为0
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
 

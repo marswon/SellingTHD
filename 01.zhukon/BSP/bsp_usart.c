@@ -1,4 +1,4 @@
-#include "bsp_common.h"
+#include "bsp_usart.h"
 
 //除了串口2，其他串口发送信息的缓存
 u8 UsartBuffer[USART_BUFFER_LEN] = {0}; //数据缓冲区
@@ -9,8 +9,9 @@ u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
 u8 Usart2Wptr = 0;
 u8 Usart2Rptr = 0;
 
-extern u8 rev_data_len;        //串口2回复数据长度，用于没有收到数据继续发送
-
+u8 REV_0B_YING = 0;          //硬币器发送0B后，接收到内容标志位，默认为0
+u8 REV_0F05_YING = 0;          //硬币器发送0F05后，接收到内容标志位，默认为0
+u8 flag_POLL_YING = 0;        //硬币器POLL指令标志位，POLL后接收到0B 0B，表示复位
 bool flag_chu_fail = FALSE;        //出货失败标志位，电机->主控，默认为0
 bool flag_chu_success = FALSE;     //出货成功标志位，电机->主控，默认为0
 bool flag_take_huowu = FALSE;       //取货标志位，安卓->主控，取货，对应标志位置一
@@ -411,8 +412,6 @@ void USART_BufferWrite(u8 ntemp)
         USART_DEBUG("dianji reset: 0213\r\n");
     }
 
-    UsartWptr = (UsartWptr + 1) % USART_BUFFER_LEN;
-
     if(UsartBuffer[UsartRptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 1) % USART_BUFFER_LEN] == 0x0D
             && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 2) % USART_BUFFER_LEN] == 0xA0 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 3) % USART_BUFFER_LEN] == 0x2E
             && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 5) % USART_BUFFER_LEN] == 0x00
@@ -426,16 +425,7 @@ void USART_BufferWrite(u8 ntemp)
         USART_DEBUG("stop update dianji: 025A\r\n");
     }
 
-//    else if(UsartBuffer[UsartRptr] == 0x0A && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 1) % USART_BUFFER_LEN] == 0x0D
-//            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 2) % USART_BUFFER_LEN] == 0x40 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 3) % USART_BUFFER_LEN] == 0x2F
-//            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 4) % USART_BUFFER_LEN] == 0x02 && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 5) % USART_BUFFER_LEN] == 0x00
-//            && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 6) % USART_BUFFER_LEN] == 0x5C && UsartBuffer[(USART_BUFFER_LEN + UsartRptr - 7) % USART_BUFFER_LEN] == 0x01)
-//    {
-//        // 结束对射升级
-//        start_flash_flag = 0;
-//        Send_CMD(UART4, 0x02, 0x5C);
-//        USART_DEBUG("stop update duishe: 025C\r\n");
-//    }
+    UsartWptr = (UsartWptr + 1) % USART_BUFFER_LEN;
 }
 
 //功能：缓存串口2接收到的纸币器回复的信息
@@ -448,6 +438,32 @@ void USART2_COIN_BufWrite(u8 ntemp)
     }
 
     USART2_COIN_BUF[Usart2Wptr] = ntemp;
+
+    if((EN_send_0B == TRUE) && USART2_COIN_BUF[(Usart2Wptr) % USART2_BUF_LEN] == 0x0B && USART2_COIN_BUF[(USART2_BUF_LEN + Usart2Wptr - 1) % USART2_BUF_LEN] == 0x0B)
+    {
+        REV_0B_YING = 1;        //POLL后，接收到0B 0B标志位
+        EN_send_0B = FALSE;     //清零标志位
+        //POLL后接收到0B 0B指令，代表硬币器复位
+        USART_DEBUG("YingBiQi RESET \r\n");
+    }
+
+    if((EN_send_0B == TRUE) && USART2_COIN_BUF[(Usart2Wptr) % USART2_BUF_LEN] == 0x00)
+    {
+        REV_0B_YING = 2;        //POLL后，接收到00(ACK)标志位
+        EN_send_0B = FALSE;     //清零标志位
+        //POLL后接收到00指令，代表硬币器复位
+        USART_DEBUG("YingBiQi RESET \r\n");
+    }
+
+    if((EN_send_0F05 == TRUE) && USART2_COIN_BUF[(Usart2Wptr) % USART2_BUF_LEN] == 0x03 && USART2_COIN_BUF[(USART2_BUF_LEN + Usart2Wptr - 1) % USART2_BUF_LEN] == 0x00
+            && USART2_COIN_BUF[(USART2_BUF_LEN + Usart2Wptr - 2) % USART2_BUF_LEN] == 0x03)
+    {
+        REV_0F05_YING = 3;      //硬币器发送0F05后，接收到03 00 03标志位
+        EN_send_0F05 = FALSE;     //清零标志位
+        //POLL后接收到0B 0B指令，代表硬币器复位
+        USART_DEBUG("YingBiQi RESET \r\n");
+    }
+
     Usart2Wptr = (Usart2Wptr + 1) % USART2_BUF_LEN;
 }
 

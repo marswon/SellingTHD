@@ -1,5 +1,6 @@
 #ifndef _BSP_COMMON_H
 #define _BSP_COMMON_H
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -13,6 +14,11 @@
 #include "includes.h"
 #endif
 
+typedef enum
+{
+    FALSE = 0, TRUE = 1
+} bool;
+
 #include "bsp_usart.h"
 #include "bsp_gpio.h"
 //#include "bsp_adc.h"
@@ -25,7 +31,7 @@
 
 #define   Version_Year       "27"       // year
 #define   Version_Month      "12"      // month
-#define   Version_Day        "19"      // day
+#define   Version_Day        "20"      // day
 
 #define HBYTE(a)               ((unsigned char)(((unsigned short)(a) >> 8) & 0xFF))
 #define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))
@@ -73,10 +79,10 @@
 #define PGout(n)   BIT_ADDR(GPIOG_ODR_Addr,n)
 #define PGin(n)    BIT_ADDR(GPIOG_IDR_Addr,n)
 
-typedef enum
-{
-    FALSE = 0, TRUE = 1
-} bool;
+//typedef enum
+//{
+//    FALSE = 0, TRUE = 1
+//} bool;
 
 unsigned short CRC16_isr(unsigned char *Dat, unsigned int len);
 bool strLenCmp(char *cmd1, char *cmd2, u8 len);
@@ -86,6 +92,7 @@ u8 strLen(char *cmd);
 void delay_init(void);
 void delay_ms(u16 nms);
 void delay_us(u32 nus);
+
 
 
 

@@ -41,4 +41,30 @@ void ZhiBiQi_Init(void);
 //纸币器使用
 void ZhiBiQi_USE(void);
 
+/***************************************************************************************************/
+
+//单独每条指令使用一个函数
+
+//功能：发送复位指令30H
+void Send_RESET_ZHI(void);
+//功能：发送纸币器固有属性查看指令31H
+void Send_STATUS_ZHI(void);
+//功能：发送安全等级指令32H，数据区两字节
+void Send_SECURITY_ZHI(void);
+//功能：发送纸币器动作状态指令33H
+void Send_POLL_ZHI(void);
+//功能：发送纸币器可接收纸币类型指令34H，数据区4字节
+void Send_BILL_TYPE_ZHI(void);
+//功能：发送暂保留状态指令35H，数据区1字节
+void Send_ESCROW_ZHI(u8 dat);
+//功能：发送复位指令36H
+void Send_STACKER_ZHI(void);
+//功能：发送扩展指令0X3700
+void Send_IDENTIFICATION_ZHI(void);
+//功能：发送扩展指令0X3701和数据区4字节
+void Send_FEATURE_ENABLE_ZHI(void);
+//功能：发送扩展指令0X3702
+void Send_IDENTIFICATION_ZHI2(void);
+
+
 #endif
