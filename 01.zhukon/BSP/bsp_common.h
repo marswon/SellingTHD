@@ -31,7 +31,7 @@ typedef enum
 
 #define   Version_Year       "27"       // year
 #define   Version_Month      "12"      // month
-#define   Version_Day        "20"      // day
+#define   Version_Day        "22"      // day
 
 #define HBYTE(a)               ((unsigned char)(((unsigned short)(a) >> 8) & 0xFF))
 #define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))

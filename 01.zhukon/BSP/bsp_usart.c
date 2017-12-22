@@ -4,21 +4,27 @@
 u8 UsartBuffer[USART_BUFFER_LEN] = {0}; //数据缓冲区
 u16 UsartWptr = 0;
 u16 UsartRptr = 0;
-//串口2对应纸币器，缓存纸币器回复的信息
-u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
-u8 Usart2Wptr = 0;
-u8 Usart2Rptr = 0;
+//串口2对应纸币器和硬币器，缓存纸币器回复的信息
+//u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
+//u16 Usart2Wptr = 0;
+//u16 Usart2Rptr = 0;
+//纸币器和硬币器POLL指令，回复数据专用缓存
+u8 BUF_0B[20] = {0};
+//硬币器TUBE STATUS指令，回复数据专用缓存
+u8 BUF_0A[20] = {0};
+u8 Wptr_YING = 0;     //硬币器写指针
+u16 Wptr_mode = 0;      //硬币器发送串口指令模式位，默认为0
+u8 price_num = 0;       //货物价格
+//纸币器和硬币器某些指令，回复数据共用缓存
+u8 BUF_common[40] = {0};
 
-u8 REV_0B_YING = 0;          //硬币器发送0B后，接收到内容标志位，默认为0
-u8 REV_0F05_YING = 0;          //硬币器发送0F05后，接收到内容标志位，默认为0
-u8 flag_POLL_YING = 0;        //硬币器POLL指令标志位，POLL后接收到0B 0B，表示复位
 bool flag_chu_fail = FALSE;        //出货失败标志位，电机->主控，默认为0
 bool flag_chu_success = FALSE;     //出货成功标志位，电机->主控，默认为0
 bool flag_take_huowu = FALSE;       //取货标志位，安卓->主控，取货，对应标志位置一
 u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
-char dat_quehuo[2] = {0};     //缓存取货几行几列，用于硬币器使用
+char dat_quehuo[3] = {0};     //缓存取货几行几列，用于硬币器使用
 
 
 //printf函数重定向到串口1
@@ -64,24 +70,32 @@ void USART1_IRQHandler(void)
         flag_test = nTemp;          //测试标志位,根据不同的串口数值，执行不同的动作
 //        printf("flag_test : %d \r\n", flag_test);        //打印标记调试位
         USART_BufferWrite(nTemp);
-
 //        USART_SendByte(USART1, nTemp);
-        if(flag_test == 0xFE)
+#if(FLAG_RUN == 0)
+
+        //测试程序专用
+        if(flag_test == 0xFF)
         {
             flag_test = 0;
             SoftwareRESET();        //软件复位,没有物理按键情况下，实现串口发命令实时复位
         }
 
-//        if(flag_test == 0xFD)
-//        {
-//            flag_test = 0;
-//            Send_COIN_ENABLE_YING();        //发送硬币类型0C0003FFFFH
-//        }
-//        if(flag_test == 0xFC)
-//        {
-//            flag_test = 0;
-//            Send_COIN_DISENABLE_YING();        //发送硬币类型0C0000FFFFH
-//        }
+        if(flag_test == 0xFE)     //开启PC打印
+        {
+            if(!flag_enable_debug)
+            {
+                flag_enable_debug = TRUE;
+            }
+
+            USART_DEBUG("debug\r\n");
+        }
+
+        if(flag_test == 0xFD)     //关闭PC打印
+        {
+            flag_enable_debug = FALSE;
+        }
+
+#endif
     }
 
     if(USART_GetFlagStatus(USART1, USART_FLAG_ORE) == SET) //overflow
@@ -112,8 +126,9 @@ void USART2_IRQHandler(void)
         /************************************************/
 //        USART_BufferWrite(nTemp);
         rev_data_len++;     //硬币器回复数据计数
-        USART2_COIN_BufWrite(nTemp);
-        USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印到PC
+//        USART2_COIN_BufWrite(nTemp);
+        BufWrite_COIN(nTemp);         //纸币器，硬币器回复数据专用缓存
+//        USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印到PC
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -430,71 +445,95 @@ void USART_BufferWrite(u8 ntemp)
 
 //功能：缓存串口2接收到的纸币器回复的信息
 //说明：纸币器收到命令后，会回复信息给我们，我们需要一个单独的BUF来接收。
-void USART2_COIN_BufWrite(u8 ntemp)
-{
-    if((Usart2Wptr + 1) % USART2_BUF_LEN == Usart2Rptr) // full
-    {
-        return;
-    }
+//void USART2_COIN_BufWrite(u8 ntemp)
+//{
+//    if((Usart2Wptr + 1) % USART2_BUF_LEN == Usart2Rptr) // full
+//    {
+//        return;
+//    }
 
-    USART2_COIN_BUF[Usart2Wptr] = ntemp;
-
-    if((EN_send_0B == TRUE) && USART2_COIN_BUF[(Usart2Wptr) % USART2_BUF_LEN] == 0x0B && USART2_COIN_BUF[(USART2_BUF_LEN + Usart2Wptr - 1) % USART2_BUF_LEN] == 0x0B)
-    {
-        REV_0B_YING = 1;        //POLL后，接收到0B 0B标志位
-        EN_send_0B = FALSE;     //清零标志位
-        //POLL后接收到0B 0B指令，代表硬币器复位
-        USART_DEBUG("YingBiQi RESET \r\n");
-    }
-
-    if((EN_send_0B == TRUE) && USART2_COIN_BUF[(Usart2Wptr) % USART2_BUF_LEN] == 0x00)
-    {
-        REV_0B_YING = 2;        //POLL后，接收到00(ACK)标志位
-        EN_send_0B = FALSE;     //清零标志位
-        //POLL后接收到00指令，代表硬币器复位
-        USART_DEBUG("YingBiQi RESET \r\n");
-    }
-
-    if((EN_send_0F05 == TRUE) && USART2_COIN_BUF[(Usart2Wptr) % USART2_BUF_LEN] == 0x03 && USART2_COIN_BUF[(USART2_BUF_LEN + Usart2Wptr - 1) % USART2_BUF_LEN] == 0x00
-            && USART2_COIN_BUF[(USART2_BUF_LEN + Usart2Wptr - 2) % USART2_BUF_LEN] == 0x03)
-    {
-        REV_0F05_YING = 3;      //硬币器发送0F05后，接收到03 00 03标志位
-        EN_send_0F05 = FALSE;     //清零标志位
-        //POLL后接收到0B 0B指令，代表硬币器复位
-        USART_DEBUG("YingBiQi RESET \r\n");
-    }
-
-    Usart2Wptr = (Usart2Wptr + 1) % USART2_BUF_LEN;
-}
+//    USART2_COIN_BUF[Usart2Wptr] = ntemp;
+//    Usart2Wptr = (Usart2Wptr + 1) % USART2_BUF_LEN;
+//}
 
 //功能：读取串口2接收到的纸币器回复的信息
-u8 USART2_COIN_BufRead(u8 *data)
-{
-    if(Usart2Rptr == Usart2Wptr) // empty
-    {
-        return 0;
-    }
+//u8 USART2_COIN_BufRead(u8 *data)
+//{
+//    if(Usart2Rptr == Usart2Wptr) // empty
+//    {
+//        return 0;
+//    }
 
-    *data = USART2_COIN_BUF[Usart2Rptr];
-    Usart2Rptr = (Usart2Rptr + 1) % USART2_BUF_LEN; //保证读位置值不溢出
-    return 1;
+//    *data = USART2_COIN_BUF[Usart2Rptr];
+//    Usart2Rptr = (Usart2Rptr + 1) % USART2_BUF_LEN; //保证读位置值不溢出
+//    return 1;
+//}
+
+//功能：缓存串口2接收到的硬币器回复的信息
+//说明：硬币器收到命令后，会回复信息给我们，我们每条指令用一个单独的BUF来接收。
+//发送串口指令时，我们会指定mode位
+void BufWrite_COIN(u8 ntemp)
+{
+    switch(Wptr_mode)       //Wptr_mode为发送指令模式位
+    {
+        case 0x000A :
+            BUF_0A[Wptr_YING++] = ntemp;
+            break;
+
+        case 0x000B :
+            BUF_0B[Wptr_YING++] = ntemp;
+            break;
+
+        case 0x0009 :
+        case 0x0F00 :
+        case 0x0F03 :
+            BUF_common[Wptr_YING++] = ntemp;        //回复信息写入公共缓存区
+            break;
+
+        case 0x0F04 :
+            BUF_common[Wptr_YING++] = ntemp;        //回复信息写入缓存区
+            break;
+
+        case 0x0F05 :
+            BUF_common[Wptr_YING++] = ntemp;
+            break;
+
+        default :
+            break;
+    }
 }
+
 
 //功能：复制串口2接收到的纸币器回复的信息到一个指定的位置
 //入口参数：str为接收的数组，str_len为接收数组长度
 //说明：先读取纸币器回复信息的缓存，然后写入到指定的位置
-void USART2_COIN_BufCopy(u8 *str, u8 str_len)
-{
-    u8 i;
-    u8 data = 0;
+//void USART2_COIN_BufCopy(u8 *str, u8 str_len)
+//{
+//    u8 i;
+//    u8 data = 0;
 
-    for(i = 0; i < str_len; i++)
-    {
-        USART2_COIN_BufRead(&data);     //读取串口2接收的数据
-        str[i] = data;
-        data = 0;       //实际中，读取越界后，CHK校验和会一直出现在后续中。
-    }
-}
+//    for(i = 0; i < str_len; i++)
+//    {
+//        USART2_COIN_BufRead(&data);     //读取串口2接收的数据
+//        str[i] = data;
+//        data = 0;       //实际中，读取越界后，CHK校验和会一直出现在后续中。
+//    }
+//}
+
+//功能：复制串口2接收到的纸币器回复的信息到一个指定的位置
+//入口参数：str为接收的数组，str_len为接收数组长度
+//说明：不通过USART2_COIN_BufRead()函数接收数据，因为可能一直没有读。
+//实际中，有问题，写指针Wptr到结尾会自动归零
+//void USART2_COIN_BufCopy(u8 *str, u8 str_len)
+//{
+//    u8 i;
+//    u16 Wptr = (Usart2Wptr - str_len);       //回到接收数据起点
+
+//    for(i = 0; i < str_len; i++)
+//    {
+//        str[i] = USART2_COIN_BUF[Wptr + i];     //纪录串口2接收的数据
+//    }
+//}
 
 //功能：串口协议命令处理
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
@@ -514,12 +553,12 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         }
         else if(Data == ANZHUO_ZHUKON_HANGLIE)  // 取"x行y列"货,发送到电机板
         {
-//            Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), Dat, 2);
-//            sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1]);
-//            USART_DEBUG(strtmp);
             flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
             dat_quehuo[0] = *Dat;       //取货行号
             dat_quehuo[1] = *(Dat + 1); //取货列号
+            price_num = *(Dat + 2);     //货物价格
+//            sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1], Dat[2]);
+//            USART_DEBUG(strtmp);
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {
@@ -630,7 +669,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT:%04X\r\n", USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT);
             USART_DEBUG(strtmp);
         }
-        else if(Data == 0x0117) // 开启打印
+        else if(Data == 0x01FE) // 开启打印
         {
             if(!flag_enable_debug)
             {
@@ -639,9 +678,13 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 
             USART_DEBUG("debug\r\n");
         }
-        else if(Data == 0x0118) // 关闭打印
+        else if(Data == 0x01FD) // 关闭打印
         {
             flag_enable_debug = FALSE;
+        }
+        else if(Data == 0x01FF) // 软件复位
+        {
+            SoftwareRESET();
         }
     }
 }

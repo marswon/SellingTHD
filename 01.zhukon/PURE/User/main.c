@@ -2,7 +2,7 @@
 #include "bsp_common.h"
 
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    0
+#define FLAG_RUN    1
 
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
@@ -27,7 +27,7 @@ int main(void)
     TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
-//    YingBiQi_Init();                //硬币器初始化
+    YingBiQi_Init();                //硬币器初始化
     memset(ndat, 0, sizeof(ndat));
     sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
     //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
@@ -91,7 +91,7 @@ int main(void)
             }
         }
 
-//        YingBiQi_USE();         //硬币器使用
+        YingBiQi_USE();         //硬币器使用
     }
 
 #else
@@ -212,7 +212,12 @@ int main(void)
         else if(flag_test == 0x14)    //打印硬币器状态指令0x0B
         {
             flag_test = 0;
-            Send_POLL_YING();
+            while(1)
+            {
+                DET_POLL_YING();   //0B接收到ACK
+                delay_ms(1000);
+            }
+//            Send_POLL_YING();
         }
         else if(flag_test == 0x15)    //发送硬币类型0C0003FFFFH
         {
@@ -242,7 +247,17 @@ int main(void)
         else if(flag_test == 0x1A)    //发送扩展指令0x0F02
         {
             flag_test = 0;
-            Send_PAYOUT_YING(0x00);
+//            DET_PAYOUT_YING(0x01);
+//            DET_PAYOUT_YING(0x0D);      //支出硬币，数值为硬币计算系数的倍数，就是5角的倍数
+            Send_PAYOUT_YING(3);     //发送扩展指令0x0F02和数据区
+            while(1)
+            {
+                Send_PAYOUT_VALUE_POLL_YING();     //发送扩展指令0x0F04
+                delay_ms(100);
+                USART_SendByte(USART2, 0x00);       //ACK
+                delay_ms(1000);
+            }
+//            DET_PAYOUT_VALUE_POLL_YING();
         }
         else if(flag_test == 0x1B)    //发送扩展指令0x0F03
         {
@@ -271,6 +286,7 @@ int main(void)
             while(1)
             {
                 YingBiQi_USE();         //硬币器使用
+                delay_ms(500);
             }
         }
         //纸币器调试串口指令
@@ -410,7 +426,7 @@ int main(void)
         else if(flag_test == 0x2F)     //发送0x0F00
         {
             flag_test = 0;
-//            Send_IDENTIFICATION_YING();
+            YingBiQi_USE();         //硬币器使用
         }
         else if(flag_test == 0x30)     //发送0x0F01
         {

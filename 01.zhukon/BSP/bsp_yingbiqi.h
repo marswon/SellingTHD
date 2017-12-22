@@ -67,7 +67,7 @@ void YingBiQi_USE(void);
 
 /***************************************************************************************************/
 
-//单独每条指令使用一个函数
+//单独每条指令使用一个函数，不管发送的结果
 
 //功能：发送复位0X08指令
 void Send_RESET_YING(void);
@@ -97,6 +97,10 @@ void Send_PAYOUT_VALUE_POLL_YING(void);
 void Send_SEND_DIAGNOSTIC_YING(void);
 
 
+/***************************************************************************************************/
+
+//单独每条指令使用一个函数，需要接收到指定的数据
+
 //功能：发送复位0X08指令并校验返回值
 void DET_RESET_YING(void);
 //功能：发送投币器参数指令0x09并校验返回值
@@ -104,7 +108,7 @@ void DET_STATUS_YING(void);
 //功能：发送投币器参数指令0x0A并校验返回值
 void DET_TUBE_STATUS_YING(void);
 //功能：发送投币器参数指令0x0B并校验返回值
-void DET_POLL_YING(void);
+u8 DET_POLL_YING(void);
 //功能：发送硬币类型0C0003FFFFh，使能收钱并校验返回值
 void DET_COIN_ENABLE_YING(void);
 //功能：发送硬币类型0C0000FFFFh，禁止收钱
@@ -122,11 +126,10 @@ void DET_PAYOUT_STATUS_YING(void);
 //功能：发送扩展指令0X0F04
 void DET_PAYOUT_VALUE_POLL_YING(void);
 //功能：发送扩展指令0X0F05
-void DET_SEND_DIAGNOSTIC_YING(void);
+u8 DET_SEND_DIAGNOSTIC_YING(void);
+//获取接收数据的CHK
+u8 Get_CHK(u8* str, u8 str_len);
 
-
-extern bool EN_send_0B;
-extern bool EN_send_0F05;
 extern u8 rev_data_len;        //串口2回复数据长度，用于没有收到数据继续发送
 
 #endif

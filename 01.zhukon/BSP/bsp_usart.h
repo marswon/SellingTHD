@@ -9,7 +9,7 @@
 #define SYS_ENABLE_IAP   0
 
 //串口2，纸币器回复消息缓存
-#define USART2_BUF_LEN 255
+#define USART2_BUF_LEN 2000
 /***************************************************/
 //定义配置使能
 #define USART1_CONFIG_ENABLED                (1)
@@ -26,10 +26,18 @@
 #define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
-extern u8 REV_0B_YING;          //硬币器发送0B后，接收到内容标志位，默认为0
-extern u8 REV_0F05_YING;          //硬币器发送0F05后，接收到内容标志位，默认为0
+extern u8 price_num;       //货物价格
+extern bool flag_take_huowu;
+extern bool flag_chu_success;
+extern bool flag_chu_fail;
+extern u8 BUF_common[40];
+extern u8 BUF_0A[20];
+extern u8 BUF_0B[20];       //纸币器和硬币器POLL指令，回复数据专用缓存
+extern u8 Wptr_YING;        //硬币器写指针
+extern u16 Wptr_mode;      //硬币器发送串口指令模式位，默认为0
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
-extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
+//extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
+
 
 /***************************************************/
 #define UPDATE_FLAG_FLASH_ADDR             0x800BB80    //写入升级标志地址
@@ -96,7 +104,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 //读取主控版本
 #define USARTCMD_ANDROID_ZHUKONG_GetZhukongVer          0x014A
 //投入金额不足，主控->安卓
-#define USARTCMD_ZHUKON_ANZHUO_CoinNoEnough             0x014A
+#define USARTCMD_ZHUKON_ANZHUO_CoinNoEnough             0x0120
 
 //USART发送9位数据
 void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);
@@ -108,8 +116,10 @@ void USART_DEBUG(char *str);
 
 //串口2接收和发送
 void USART2_COIN_BufWrite(u8 ntemp);
-u8 USART2_COIN_BufRead(u8 *data);
-void USART2_COIN_BufCopy(u8 *str, u8 str_len);
+//u8 USART2_COIN_BufRead(u8 *data);
+//void USART2_COIN_BufCopy(u8 *str, u8 str_len);
+void BufWrite_COIN(u8 ntemp);
+
 
 void USART_BufferWrite(u8 ntemp);
 u16 USART_BufferLength(void);
