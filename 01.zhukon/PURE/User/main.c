@@ -248,15 +248,15 @@ int main(void)
         {
             flag_test = 0;
 //            DET_PAYOUT_YING(0x01);
-//            DET_PAYOUT_YING(0x0D);      //支出硬币，数值为硬币计算系数的倍数，就是5角的倍数
-            Send_PAYOUT_YING(3);     //发送扩展指令0x0F02和数据区
-            while(1)
-            {
-                Send_PAYOUT_VALUE_POLL_YING();     //发送扩展指令0x0F04
-                delay_ms(100);
-                USART_SendByte(USART2, 0x00);       //ACK
-                delay_ms(1000);
-            }
+            DET_PAYOUT_YING(8);      //支出硬币，数值为硬币计算系数的倍数，就是5角的倍数
+//            Send_PAYOUT_YING(3);     //发送扩展指令0x0F02和数据区
+//            while(1)
+//            {
+//                Send_PAYOUT_VALUE_POLL_YING();     //发送扩展指令0x0F04
+//                delay_ms(100);
+//                USART_SendByte(USART2, 0x00);       //ACK
+//                delay_ms(1000);
+//            }
 //            DET_PAYOUT_VALUE_POLL_YING();
         }
         else if(flag_test == 0x1B)    //发送扩展指令0x0F03
