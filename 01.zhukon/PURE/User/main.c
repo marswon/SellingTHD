@@ -2,7 +2,7 @@
 #include "bsp_common.h"
 
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    0
+#define FLAG_RUN    1
 
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
@@ -27,7 +27,8 @@ int main(void)
     TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
-//    YingBiQi_Init();                //硬币器初始化
+    YingBiQi_Init();                //硬币器初始化
+    ZhiBiQi_Init();        //纸币器流程初始化
     memset(ndat, 0, sizeof(ndat));
     sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
     //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
@@ -91,7 +92,9 @@ int main(void)
             }
         }
 
-        YingBiQi_USE();         //硬币器使用
+//        YingBiQi_USE();         //硬币器使用
+        ZhiBiQi_USE();          //纸币器使用
+        delay_ms(100);
     }
 
 #else
@@ -357,6 +360,7 @@ int main(void)
             {
                 ZhiBiQi_USE();          //纸币器使用
                 delay_ms(1000);
+//                delay_ms(1000);
             }
             
         }

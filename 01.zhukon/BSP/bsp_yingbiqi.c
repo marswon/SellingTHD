@@ -174,7 +174,7 @@ void YingBiQi_Init(void)
 //说明：硬币器要想检测硬币，必须循环发送指定指令。否则，机器不会检测硬币
 void YingBiQi_USE(void)
 {
-    u8 num_coin = 0;   //投入钱币的总金额
+    u16 num_coin = 0;   //投入钱币的总金额
     static u8 balance = 0;  //投入货币取货后投入的余额
     u8 tmp_05_TUBE = 0;
     u8 tmp_10_TUBE = 0;
