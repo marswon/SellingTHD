@@ -2,7 +2,7 @@
 #include "bsp_common.h"
 
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    1
+#define FLAG_RUN    0
 
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
@@ -27,7 +27,7 @@ int main(void)
     TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
-    YingBiQi_Init();                //硬币器初始化
+//    YingBiQi_Init();                //硬币器初始化
     memset(ndat, 0, sizeof(ndat));
     sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
     //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
@@ -98,6 +98,8 @@ int main(void)
 
     while(1)
     {
+        KEY_Scan(1);
+
         //PC调试
         if(flag_test == 1)
         {
@@ -212,11 +214,13 @@ int main(void)
         else if(flag_test == 0x14)    //打印硬币器状态指令0x0B
         {
             flag_test = 0;
+
             while(1)
             {
                 DET_POLL_YING();   //0B接收到ACK
                 delay_ms(1000);
             }
+
 //            Send_POLL_YING();
         }
         else if(flag_test == 0x15)    //发送硬币类型0C0003FFFFH
@@ -286,63 +290,55 @@ int main(void)
             while(1)
             {
                 YingBiQi_USE();         //硬币器使用
-                delay_ms(500);
+                delay_ms(1000);
+                delay_ms(1000);
             }
         }
         //纸币器调试串口指令
         else if(flag_test == 0x20)
         {
             flag_test = 0;
-            Send_CMD_BASIC_coin(RESET_ZHI, NULL);      //发送复位指令0x30
+            Send_RESET_ZHI();      //发送复位指令0x30
         }
         else if(flag_test == 0x21)
         {
             flag_test = 0;
-            Send_CMD_BASIC_coin(STATUS_ZHI, NULL);      //发送状态指令0x31
+            Send_STATUS_ZHI();      //发送纸币器参数指令0x31
         }
         else if(flag_test == 0x22)
         {
-            u8 coin_dat[4] = {0};
             flag_test = 0;
-            coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-            coin_dat[1] = 0x00;
-            Send_CMD_BASIC_coin(SECURITY_ZHI, coin_dat);      //发送复位指令0x32
+            Send_SECURITY_ZHI();      //发送安全等级指令0x32，暂时用不到
         }
         else if(flag_test == 0x23)
         {
             flag_test = 0;
-            Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
+            Send_POLL_ZHI();      //发送POLL指令0x33，状态
         }
         else if(flag_test == 0x24)
         {
-            u8 coin_dat[4] = {0};
             flag_test = 0;
-            coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-            coin_dat[1] = 0x0F;
-            coin_dat[2] = 0x00;
-            coin_dat[3] = 0x0F;
-            Send_CMD_BASIC_coin(BILL_TYPE_ZHI, coin_dat);      //发送指令0x34
+            Send_BILL_TYPE_ZHI(1);      //发送可收钱指令34 00 0F 00 0FH
         }
         else if(flag_test == 0x25)
         {
-            u8 coin_dat = 0;
             flag_test = 0;
-            Send_CMD_BASIC_coin(ESCROW_ZHI, &coin_dat);      //发送指令0x35
+            Send_BILL_TYPE_ZHI(2);      //发送不收钱指令34 00 00 00 0FH
         }
         else if(flag_test == 0x26)
         {
             flag_test = 0;
-            Send_CMD_BASIC_coin(STACKER_ZHI, NULL);      //发送指令0x36
+//            Send_ESCROW_ZHI();      //发送指令0x35
         }
         else if(flag_test == 0x27)
         {
             flag_test = 0;
-            Send_CMD_EXP_coin(IDENTIFICATION_ZHI, NULL);      //发送扩展指令0x3700
+           Send_STACKER_ZHI();      //发送纸币张数指令0x36
         }
         else if(flag_test == 0x28)
         {
             flag_test = 0;
-            Send_CMD_EXP_coin(FEATURE_ENABLE_ZHI, NULL);      //发送扩展指令0x3701
+            Send_IDENTIFICATION_ZHI();      //发送扩展指令0x3700
         }
         else if(flag_test == 0x29)
         {
@@ -357,88 +353,81 @@ int main(void)
         else if(flag_test == 0x2B)
         {
             flag_test = 0;
-            ZhiBiQi_USE();          //纸币器使用
+            while(1)
+            {
+                ZhiBiQi_USE();          //纸币器使用
+                delay_ms(1000);
+            }
+            
         }
-        else if(flag_test == 0x2C)     //发送0x0B
+        else if(flag_test == 0x2C)     //发送0x33
         {
             flag_test = 0;
+            while(1)
+            {
+                Send_POLL_ZHI();    //发送POLL指令，33H
+            }
         }
-        else if(flag_test == 0x2D)     //发送初始化序列
-        {
-            u8 coin_dat[4] = {0};
-            flag_test = 0;
-            Send_CMD_BASIC_coin(RESET_YING, NULL);      //发送复位指令08H
-            delay_ms(500);
-            Send_CMD_BASIC_coin(STATUS_YING, NULL);      //发送硬币器状态指令09H
-            delay_ms(500);
-            Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
-            delay_ms(500);
-            coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-            coin_dat[1] = 0x00;
-            coin_dat[2] = 0x00;
-            coin_dat[3] = 0x03;
-            Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
-            delay_ms(500);
-            Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令0AH，回复剩余各个钱管状态
-            delay_ms(500);
-            Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型0BH
-            delay_ms(500);
-            Send_CMD_EXP_coin(SEND_DIAGNOSTIC_YING, NULL);     //发送扩展指令0x0F05
-            delay_ms(500);
-            coin_dat[0] = 0x00;
-            coin_dat[1] = 0x03;
-            coin_dat[2] = 0xFF;
-            coin_dat[3] = 0xFF;
-            Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //回复机器可用硬币类型0C0003FFFFH
-            delay_ms(500);
-        }
-        else if(flag_test == 0x2E)     //发送初始化序列
-        {
-//            u8 coin_dat[4] = {0};
-//            flag_test = 0;
-//            Send_CMD_BASIC_coin(RESET_YING, NULL);      //发送复位指令
-//            delay_ms(500);
-//            Send_CMD_BASIC_coin(STATUS_YING, NULL);      //发送硬币器状态指令
-//            delay_ms(500);
-//            Send_CMD_EXP_coin(IDENTIFICATION_YING, NULL);     //发送扩展指令0x0F00
-//            delay_ms(500);
-//            coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-//            coin_dat[1] = 0x00;
-//            coin_dat[2] = 0x00;
-//            coin_dat[3] = 0x03;
-//            Send_CMD_EXP_coin(FEATURE_ENABLE_YING, coin_dat);     //发送扩展指令0x0F01和数据区
-//            delay_ms(500);
-//            Send_CMD_BASIC_coin(TUBE_STATUS_YING, NULL);    //发送钱管状态指令，回复剩余各个钱管状态
-//            delay_ms(500);
-//            Send_CMD_BASIC_coin(POLL_YING, NULL);    //回复机器动作类型
-//            delay_ms(500);
-//            Send_CMD_EXP_coin(SEND_DIAGNOSTIC_YING, NULL);     //发送扩展指令0x0F05
-//            delay_ms(500);
-//            coin_dat[0] = 0x00;
-//            coin_dat[1] = 0x03;
-//            coin_dat[2] = 0xFF;
-//            coin_dat[3] = 0xFF;
-//            Send_CMD_BASIC_coin(COIN_TYPE_YING, coin_dat);    //回复机器可用硬币类型
-//            delay_ms(500);
-            flag_test = 0;
-            Send_IDENTIFICATION_YING();
-        }
-        else if(flag_test == 0x2F)     //发送0x0F00
+        else if(flag_test == 0x2D)
         {
             flag_test = 0;
-            YingBiQi_USE();         //硬币器使用
+            DET_RESET_ZHI();        //复位30H
         }
-        else if(flag_test == 0x30)     //发送0x0F01
+        else if(flag_test == 0x2E)
         {
             flag_test = 0;
-//            Send_FEATURE_ENABLE_YING();
+            DET_STATUS_ZHI();       //纸币器参数指令31H
         }
-        else if(flag_test == 0x31)     //发送0x0F05
+        else if(flag_test == 0x2F)
         {
             flag_test = 0;
-//            Send_SEND_DIAGNOSTIC_YING();
+            while(1)
+            {
+                DET_POLL_ZHI();     //发送POLL指令，33H
+                delay_ms(1000);
+            } 
         }
-
+        else if(flag_test == 0x30)
+        {
+            flag_test = 0;
+            DET_BILL_TYPE_ZHI(1);       //发送可收钱
+        }
+        else if(flag_test == 0x31)
+        {
+            flag_test = 0;
+            DET_BILL_TYPE_ZHI(2);       //发送不收钱
+        }
+        else if(flag_test == 0x32)
+        {
+            u16 coin_num = 0;
+            flag_test = 0;
+            DET_STACKER_ZHI(&coin_num);      //指令36H，读取钱数
+        }
+        else if(flag_test == 0x33)
+        {
+            flag_test = 0;
+            DET_IDENTIFICATION_ZHI();       //厂家信息37 00H
+        }
+        else if(flag_test == 0x34)
+        {
+            u16 coin_num = 0;
+            while(!(1 == DET_POLL_ZHI()));       //指令33H,初始化必须接收到ACK
+        }
+        else if(flag_test == 0x35)
+        {
+            flag_test = 0;
+            DET_IDENTIFICATION_ZHI();       //厂家信息37 00H
+        }
+        else if(flag_test == 0x36)
+        {
+            flag_test = 0;
+            DET_ESCROW_ZHI(1);      //暂保留位置，收钱
+        }
+        else if(flag_test == 0x37)
+        {
+            flag_test = 0;
+            DET_ESCROW_ZHI(2);      //暂保留位置，退回钱
+        }
 //        else if(flag_test == 15)     //开启PC打印
 //        {
 //            flag_test = 0;

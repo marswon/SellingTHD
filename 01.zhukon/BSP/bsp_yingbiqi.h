@@ -106,7 +106,7 @@ void DET_RESET_YING(void);
 //功能：发送投币器参数指令0x09并校验返回值
 void DET_STATUS_YING(void);
 //功能：发送投币器参数指令0x0A并校验返回值
-void DET_TUBE_STATUS_YING(void);
+u8 DET_TUBE_STATUS_YING(u8* num_05, u8* num_10);
 //功能：发送投币器参数指令0x0B并校验返回值
 u8 DET_POLL_YING(void);
 //功能：发送硬币类型0C0003FFFFh，使能收钱并校验返回值

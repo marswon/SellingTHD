@@ -18,6 +18,10 @@ typedef enum
 {
     FALSE = 0, TRUE = 1
 } bool;
+#define HBYTE(a)               ((unsigned char)(((unsigned short)(a) >> 8) & 0xFF))
+#define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))
+#define MAKEWORD(bLow,bHigh)   ((unsigned short)(((unsigned char)(bLow))|(((unsigned short)((unsigned char)(bHigh)))<<8)))
+
 
 #include "bsp_usart.h"
 #include "bsp_gpio.h"
@@ -31,13 +35,8 @@ typedef enum
 
 #define   Version_Year       "27"       // year
 #define   Version_Month      "12"      // month
-#define   Version_Day        "23"      // day
+#define   Version_Day        "26"      // day
 
-
-
-#define HBYTE(a)               ((unsigned char)(((unsigned short)(a) >> 8) & 0xFF))
-#define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))
-#define MAKEWORD(bLow,bHigh)   ((unsigned short)(((unsigned char)(bLow))|(((unsigned short)((unsigned char)(bHigh)))<<8)))
 
 //位带操作
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))

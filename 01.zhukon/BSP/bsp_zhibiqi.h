@@ -19,7 +19,8 @@
 #define     IDENTIFICATION_ZHI2 0x3702
 //常规指令回复数据长度，不包括CHK校验字节
 #define     LEN_RESET_ZHI           1
-#define     LEN_STATUS_ZHI          27
+//#define     LEN_STATUS_ZHI          27
+#define     LEN_STATUS_ZHI          15
 #define     LEN_SECURITY_ZHI        0
 #define     LEN_POLL_ZHI            16
 #define     LEN_BILL_TYPE_ZHI       0
@@ -53,10 +54,10 @@ void Send_STATUS_ZHI(void);
 void Send_SECURITY_ZHI(void);
 //功能：发送纸币器动作状态指令33H
 void Send_POLL_ZHI(void);
-//功能：发送纸币器可接收纸币类型指令34H，数据区4字节
-void Send_BILL_TYPE_ZHI(void);
+//功能：发送纸币器可接收纸币类型指令34H
+void Send_BILL_TYPE_ZHI(u8 mode);
 //功能：发送暂保留状态指令35H，数据区1字节
-void Send_ESCROW_ZHI(u8 dat);
+void Send_ESCROW_ZHI(u8 mode);
 //功能：发送复位指令36H
 void Send_STACKER_ZHI(void);
 //功能：发送扩展指令0X3700
@@ -67,4 +68,28 @@ void Send_FEATURE_ENABLE_ZHI(void);
 void Send_IDENTIFICATION_ZHI2(void);
 
 
+/***************************************************************************************************/
+
+//单独每条指令使用一个函数，需要接收到指定的数据
+
+//功能：发送复位0X30指令并校验返回值
+void DET_RESET_ZHI(void);
+//功能：发送纸币器参数指令0x31并校验返回值
+void DET_STATUS_ZHI(void);
+//功能：发送纸币器安全等级指令0x32并校验返回值
+void DET_SECURITY_ZHI(void);
+//功能：发送纸币器动作指令0x33并校验返回值
+u8 DET_POLL_ZHI(void);
+//功能：发送纸币器可接收纸币类型指令34H，数据区4字节
+void DET_BILL_TYPE_ZHI(u8 mode);
+//功能：处理处于暂保留位置的纸币
+void DET_ESCROW_ZHI(u8 mode);
+//功能：发送读取现金盒钱数指令36H
+u8 DET_STACKER_ZHI(u16* num_coin);
+
+//功能：发送扩展指令0x3700
+void DET_IDENTIFICATION_ZHI(void);
+
 #endif
+
+

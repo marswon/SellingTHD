@@ -31,8 +31,8 @@ extern bool flag_take_huowu;
 extern bool flag_chu_success;
 extern bool flag_chu_fail;
 extern u8 BUF_common[40];
-extern u8 BUF_0A[20];
-extern u8 BUF_0B[20];       //纸币器和硬币器POLL指令，回复数据专用缓存
+extern u8 BUF_0A[30];
+extern u8 BUF_POLL[20];       //纸币器和硬币器POLL指令，回复数据专用缓存
 extern u8 Wptr_YING;        //硬币器写指针
 extern u16 Wptr_mode;      //硬币器发送串口指令模式位，默认为0
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
@@ -105,6 +105,9 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define USARTCMD_ANDROID_ZHUKONG_GetZhukongVer          0x014A
 //投入金额不足，主控->安卓
 #define USARTCMD_ZHUKON_ANZHUO_CoinNoEnough             0x0120
+//纸币器现金盒装满，主控->安卓
+#define USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL                 0x0119
+
 
 //USART发送9位数据
 void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);

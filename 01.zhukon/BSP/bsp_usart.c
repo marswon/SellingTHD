@@ -9,9 +9,9 @@ u16 UsartRptr = 0;
 //u16 Usart2Wptr = 0;
 //u16 Usart2Rptr = 0;
 //纸币器和硬币器POLL指令，回复数据专用缓存
-u8 BUF_0B[20] = {0};
+u8 BUF_POLL[20] = {0};
 //硬币器TUBE STATUS指令，回复数据专用缓存
-u8 BUF_0A[20] = {0};
+u8 BUF_0A[30] = {0};
 u8 Wptr_YING = 0;     //硬币器写指针
 u16 Wptr_mode = 0;      //硬币器发送串口指令模式位，默认为0
 u8 price_num = 0;       //货物价格
@@ -26,6 +26,7 @@ u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
 char dat_quehuo[3] = {0};     //缓存取货几行几列，用于硬币器使用
 
+bool flag_COIN_print = FALSE;       //纸币器，硬币器实时打印标志位
 
 //printf函数重定向到串口1
 #if 1
@@ -129,6 +130,11 @@ void USART2_IRQHandler(void)
 //        USART2_COIN_BufWrite(nTemp);
         BufWrite_COIN(nTemp);         //纸币器，硬币器回复数据专用缓存
 //        USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印到PC
+
+        if(flag_COIN_print == TRUE)        //根据指令开关纸币器回复实时打印
+        {
+            USART_SendByte(USART1, nTemp);
+        }
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -476,12 +482,14 @@ void BufWrite_COIN(u8 ntemp)
 {
     switch(Wptr_mode)       //Wptr_mode为发送指令模式位
     {
+        case 0x0036 :
         case 0x000A :
             BUF_0A[Wptr_YING++] = ntemp;
             break;
 
+        case 0x0033 :
         case 0x000B :
-            BUF_0B[Wptr_YING++] = ntemp;
+            BUF_POLL[Wptr_YING++] = ntemp;      //纸币器和硬币器POLL指令，回复共用缓存
             break;
 
         case 0x0009 :
@@ -669,7 +677,16 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT:%04X\r\n", USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT);
             USART_DEBUG(strtmp);
         }
-        else if(Data == 0x01FE) // 开启打印
+        else if(Data == 0x01FB) // 开启纸币器接收数据实时打印
+        {
+            flag_COIN_print = TRUE;
+            USART_SendBytess(USART1, "COIN print\r\n");     //提示信息
+        }
+        else if(Data == 0x01FC) // 关闭纸币器接收数据实时打印
+        {
+            flag_COIN_print = FALSE;
+        }
+        else if(Data == 0x01FE) // 开启debug打印
         {
             if(!flag_enable_debug)
             {
@@ -678,7 +695,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 
             USART_DEBUG("debug\r\n");
         }
-        else if(Data == 0x01FD) // 关闭打印
+        else if(Data == 0x01FD) // 关闭debug打印
         {
             flag_enable_debug = FALSE;
         }

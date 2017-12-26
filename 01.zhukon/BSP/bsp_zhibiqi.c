@@ -2,6 +2,8 @@
 
 //纸币器延时时间，单位为ms
 #define TIME_DELAY_ZHI      100
+//硬币器，纸币器初始化，串口指令延时等待标志位
+#define FLAG_WAIT   1
 
 /********************* 纸币器 ********************/
 //u16 tmp_TUBE_ZHI = 0;      //纸币器钱管满状态缓存
@@ -18,78 +20,35 @@
 //u8 num_10_ZHI = 0;    //投入10元的总数
 //u8 num_20_ZHI = 0;    //投入20元的总数
 
+extern char strtmp[100];     //打印调试信息缓存信息
+static u16 num_ZHIBI = 0;          //现金盒纸币的张数
+
 //功能：纸币器初始化
 //入口参数：
 //说明：纸币器初始化函数，按照文档初始化流程
-//void ZhiBiQi_Init(void)
-//{
-//    u8 coin_dat[4] = {0};
-//    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-//#if(FLAG_WAIT == 1)
-//    delay_ms(TIME_DELAY_ZHI);
-//#endif
-//    Send_CMD_BASIC_coin(STATUS_ZHI, NULL);      //发送状态指令0x31
-//#if(FLAG_WAIT == 1)
-//    delay_ms(TIME_DELAY_ZHI);
-//#endif
-//    Send_CMD_EXP_coin(IDENTIFICATION_ZHI, NULL);      //发送扩展指令0x3700
-//#if(FLAG_WAIT == 1)
-//    delay_ms(TIME_DELAY_ZHI);
-//#endif
-//    Send_CMD_BASIC_coin(STACKER_ZHI, NULL);      //发送指令0x36
-//#if(FLAG_WAIT == 1)
-//    delay_ms(TIME_DELAY_ZHI);
-//#endif
-//    coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-//    coin_dat[1] = 0x0F;     //纸币器可使用纸币类型B0~B3，1,5,TIME_DELAY_ZHI,20
-//    coin_dat[2] = 0x00;
-//    coin_dat[3] = 0x0F;     //使用暂保留功能
-//    Send_CMD_BASIC_coin(BILL_TYPE_ZHI, coin_dat);      //发送指令0x34
-//#if(FLAG_WAIT == 1)
-//    delay_ms(TIME_DELAY_ZHI);
-//#endif
-////    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-////    while(1)
-////    {
-////        Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-////#if(FLAG_WAIT == 1)
-////        delay_ms(TIME_DELAY_ZHI);
-////#endif
-////        delay_ms(500);
-////    }
-//}
-
 void ZhiBiQi_Init(void)
 {
-    Send_POLL_ZHI();      //发送指令0x33
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_ZHI);
-#endif
-    Send_STATUS_ZHI();      //发送状态指令0x31
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_ZHI);
-#endif
-    Send_IDENTIFICATION_ZHI();      //发送扩展指令0x3700
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_ZHI);
-#endif
-    Send_STACKER_ZHI();      //发送指令0x36
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_ZHI);
-#endif
-    Send_BILL_TYPE_ZHI();   //发送指令0x34000f000f
-#if(FLAG_WAIT == 1)
-    delay_ms(TIME_DELAY_ZHI);
-#endif
-//    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-//    while(1)
-//    {
-//        Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-//#if(FLAG_WAIT == 1)
-//        delay_ms(TIME_DELAY_ZHI);
-//#endif
-//        delay_ms(500);
-//    }
+    u8 rev = 0;
+    DET_RESET_ZHI();        //复位RESET
+//    while(!(5 == DET_POLL_ZHI()));       //指令33H,初始化必须接收到ACK
+    DET_STATUS_ZHI();       //纸币器参数31H
+    DET_IDENTIFICATION_ZHI();       //指令3700H，返回厂家信息
+
+    do
+    {
+        rev = DET_STACKER_ZHI(&num_ZHIBI);      //指令36H，返回现金盒状态
+    }
+    while(rev == 0);        //CHK有误
+
+    if(rev == 2)    //纸币器钱盒装满
+    {
+        Send_CMD(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL), LBYTE(USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL));     //主控->安卓，纸币器钱盒装满
+        USART_DEBUG("ZHIBIQI : full\r\n");
+    }
+
+    DET_BILL_TYPE_ZHI(1);        //设置现金盒可装币种和可暂保留币种34H
+
+    while(!(1 == DET_POLL_ZHI()));       //指令33H,初始化必须接收到ACK
 }
 
 
@@ -98,9 +57,475 @@ void ZhiBiQi_Init(void)
 //说明：纸币器要想检测纸币，必须循环发送指定指令。否则，机器不会检测纸币
 void ZhiBiQi_USE(void)
 {
-    Send_CMD_BASIC_coin(POLL_ZHI, NULL);      //发送指令0x33
-    delay_ms(500);
+    DET_POLL_ZHI();
 }
+
+//功能：发送复位0X30指令并校验返回值
+void DET_RESET_ZHI(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_RESET_ZHI();      //发送复位指令30H
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(rev_data_len > 0)       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+
+//功能：发送纸币器参数指令0x31并校验返回值
+void DET_STATUS_ZHI(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_STATUS_ZHI();      //发送硬币器状态指令31H
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(rev_data_len >= (LEN_STATUS_ZHI + 1))       //判断接受的数据长度
+//         if(rev_data_len > 0)
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+
+//功能：发送纸币器安全等级指令0x32并校验返回值
+void DET_SECURITY_ZHI(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_SECURITY_ZHI();            //设置纸币器安全等级指令32H
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：发送纸币器动作指令0x33并校验返回值
+//返回值：POLL指令不同的回复信息，返回不同的值。实际中，重要的就是收钱
+u8 DET_POLL_ZHI(void)
+{
+    u8 REV_33_YING = 0;          //纸币器发送33后，接收到内容标志位，默认为0
+//    static u8 flag_huishou = 0;     //回收支出的标志位
+    Wptr_mode = 0x33;
+    Wptr_YING = 0;
+
+    while(1)
+    {
+        Send_POLL_ZHI();    //回复机器动作类型0x33
+//#if(FLAG_WAIT == 1)
+//        delay_ms(TIME_DELAY_ZHI);
+//#endif
+        delay_ms(50);
+
+        if(Wptr_YING > 0)       //判断接受的数据长度
+        {
+            break;
+        }
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+
+    if(0 == Get_CHK(BUF_POLL, Wptr_YING))
+    {
+        return 0;   //CHK有误
+    }
+
+    if((Wptr_YING == 1) && BUF_POLL[Wptr_YING - 1] == 0x00)
+    {
+        REV_33_YING = 1;        //POLL后，接收到00(ACK)标志位
+//        if(flag_huishou == 100)
+//        {
+//            flag_huishou--;     //保证前一次手动支出，随后支出结束
+//            REV_33_YING = flag_huishou;     //自减1，返回99，下次不会执行
+//            Wptr_YING = 0;
+//            Wptr_mode = 0;
+//            return REV_33_YING;
+//        }
+        //POLL后接收到00指令，代表硬币器复位
+        USART_DEBUG("ZhiBiQi ACK \r\n");
+    }
+    else if((Wptr_YING == 2) && BUF_POLL[0] == 0x06 && BUF_POLL[1] == 0x06)
+    {
+        REV_33_YING = 2;        //POLL后，接收到06 06标志位
+        //POLL后接收到06 06指令，代表纸币器复位
+        USART_DEBUG("ZhiBiQi RESET \r\n");
+    }
+    else if((Wptr_YING == 2) && BUF_POLL[0] == 0x03 && BUF_POLL[1] == 0x03)
+    {
+        REV_33_YING = 3;        //POLL后，接收到03 03标志位
+        //POLL后接收到03 03指令，代表纸币器忙，一般是正在收钱
+        USART_DEBUG("ZhiBiQi 0303 \r\n");
+    }
+    else if((Wptr_YING == 2) && BUF_POLL[0] == 0x09 && BUF_POLL[1] == 0x09)
+    {
+        REV_33_YING = 4;        //POLL后，接收到09 09标志位,纸币器不可用
+        USART_DEBUG("ZhiBiQi NO USE \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x90 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x99)
+    {
+        REV_33_YING = 5;        //POLL后，接收到90 09 99标志位,收入1元纸币到暂保留位置
+        USART_DEBUG("ZhiBiQi ZAN1 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x91 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x9A)
+    {
+        REV_33_YING = 6;        //POLL后，接收到91 09 9A标志位,收入5元纸币到暂保留位置
+        USART_DEBUG("ZhiBiQi ZAN5 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x92 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x9B)
+    {
+        REV_33_YING = 7;        //POLL后，接到92 09 9B标志位,收入10元纸币到暂保留位置
+//        flag_huishou = 100;      //设置回收支出标志
+        USART_DEBUG("ZhiBiQi ZAN10 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x93 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x9C)
+    {
+        REV_33_YING = 8;        //POLL后，接到93 09 9C标志位,收入20元纸币到暂保留位置
+//        flag_huishou = 100;      //设置回收支出标志,暂时为100
+        USART_DEBUG("ZhiBiQi ZAN20 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x80 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x89)
+    {
+        REV_33_YING = 9;        //POLL后，接收到80 09 89标志位,收入1元纸币到钱盒
+        USART_DEBUG("ZhiBiQi RU1 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x81 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8A)
+    {
+        REV_33_YING = 10;        //POLL后，接收到81 09 8A标志位,收入5元纸币到钱盒
+        USART_DEBUG("ZhiBiQi RU5 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x82 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8B)
+    {
+        REV_33_YING = 11;        //POLL后，接到82 09 8B标志位,收入10元纸币到钱盒
+//        flag_huishou = 100;      //设置回收支出标志
+        USART_DEBUG("ZhiBiQi RU10 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x83 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8C)
+    {
+        REV_33_YING = 12;        //POLL后，接到83 09 8C标志位,收入20元纸币到钱盒
+//        flag_huishou = 100;      //设置回收支出标志,暂时为100
+        USART_DEBUG("ZhiBiQi RU20 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA0 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xA9)
+    {
+        REV_33_YING = 9;        //POLL后，接收到A0 09 89标志位,退回1元纸币
+        USART_DEBUG("ZhiBiQi FAN1 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA1 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xAA)
+    {
+        REV_33_YING = 10;        //POLL后，接收到A1 09 8A标志位,退回5元纸币
+        USART_DEBUG("ZhiBiQi FAN5 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA2 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xAB)
+    {
+        REV_33_YING = 11;        //POLL后，接到A2 09 8B标志位,退回10元纸币
+//        flag_huishou = 100;      //设置回收支出标志
+        USART_DEBUG("ZhiBiQi FAN10 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA3 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xAC)
+    {
+        REV_33_YING = 12;        //POLL后，接到A3 09 8C标志位,退回20元纸币
+//        flag_huishou = 100;      //设置回收支出标志,暂时为100
+        USART_DEBUG("ZhiBiQi FAN20 \r\n");
+    }
+    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x06 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x0F)
+    {
+        REV_33_YING = 13;        //开机上电第一次初始化后，POLL后，首先回复06 09 0F
+//        flag_huishou = 100;      //设置回收支出标志,暂时为100
+        USART_DEBUG("ZhiBiQi INIT \r\n");
+    }
+    else
+    {
+        REV_33_YING = 0xFF;        //POLL后，接收到未定义的数据
+    }
+
+//    switch(Wptr_YING)
+//    {
+//        case 1:
+//            if(BUF_POLL[0] == 0x00)
+//            {
+//                REV_33_YING = 1;        //POLL后，接收到00(ACK)标志位
+//            }
+
+//            break;
+
+//        case 2:
+//            if(BUF_POLL[0] == 0x03 && BUF_POLL[1] == 0x03)
+//            {
+//                REV_33_YING = 3;        //POLL后，接收到03 03标志位
+//                //POLL后接收到03 03指令，代表纸币器忙，一般是正在收钱
+//                USART_DEBUG("ZhiBiQi 0303 \r\n");
+//            }
+//            else if(BUF_POLL[0] == 0x09 && BUF_POLL[1] == 0x09)
+//            {
+//                REV_33_YING = 4;        //POLL后，接收到09 09标志位,纸币器不可用
+//                USART_DEBUG("ZhiBiQi NO USE \r\n");
+//            }
+//            else if((Wptr_YING == 2) && BUF_POLL[0] == 0x06 && BUF_POLL[1] == 0x06)
+//            {
+//                REV_33_YING = 2;        //POLL后，接收到06 06标志位
+//                //POLL后接收到06 06指令，代表纸币器复位
+//                USART_DEBUG("ZhiBiQi RESET \r\n");
+//            }
+
+//            break;
+
+//        case 3:
+//            if((Wptr_YING == 3) && BUF_POLL[0] == 0x90 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x99)
+//            {
+//                REV_33_YING = 5;        //POLL后，接收到90 09 99标志位,收入1元纸币到暂保留位置
+//                USART_DEBUG("ZhiBiQi ZAN1 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x91 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x9A)
+//            {
+//                REV_33_YING = 6;        //POLL后，接收到91 09 9A标志位,收入5元纸币到暂保留位置
+//                USART_DEBUG("ZhiBiQi ZAN5 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x92 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x9B)
+//            {
+//                REV_33_YING = 7;        //POLL后，接到92 09 9B标志位,收入10元纸币到暂保留位置
+//                USART_DEBUG("ZhiBiQi ZAN10 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x93 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x9C)
+//            {
+//                REV_33_YING = 8;        //POLL后，接到93 09 9C标志位,收入20元纸币到暂保留位置
+//                USART_DEBUG("ZhiBiQi ZAN20 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x80 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x89)
+//            {
+//                REV_33_YING = 9;        //POLL后，接收到80 09 89标志位,收入1元纸币到钱盒
+//                USART_DEBUG("ZhiBiQi RU1 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x81 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8A)
+//            {
+//                REV_33_YING = 10;        //POLL后，接收到81 09 8A标志位,收入5元纸币到钱盒
+//                USART_DEBUG("ZhiBiQi RU5 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x82 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8B)
+//            {
+//                REV_33_YING = 11;        //POLL后，接到82 09 8B标志位,收入10元纸币到钱盒
+//                USART_DEBUG("ZhiBiQi RU10 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0x83 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8C)
+//            {
+//                REV_33_YING = 12;        //POLL后，接到83 09 8C标志位,收入20元纸币到钱盒
+//                USART_DEBUG("ZhiBiQi RU20 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA0 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xA9)
+//            {
+//                REV_33_YING = 9;        //POLL后，接收到A0 09 89标志位,退回1元纸币
+//                USART_DEBUG("ZhiBiQi FAN1 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA1 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xAA)
+//            {
+//                REV_33_YING = 10;        //POLL后，接收到A1 09 8A标志位,退回5元纸币
+//                USART_DEBUG("ZhiBiQi FAN5 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA2 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xAB)
+//            {
+//                REV_33_YING = 11;        //POLL后，接到A2 09 8B标志位,退回10元纸币
+//                USART_DEBUG("ZhiBiQi FAN10 \r\n");
+//            }
+//            else if((Wptr_YING == 3) && BUF_POLL[0] == 0xA3 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0xAC)
+//            {
+//                REV_33_YING = 12;        //POLL后，接到A3 09 8C标志位,退回20元纸币
+//                USART_DEBUG("ZhiBiQi FAN20 \r\n");
+//            }
+
+//            break;
+
+//        default:
+//            break;
+//    }
+    sprintf((char*)strtmp, "REV : %d\r\n", REV_33_YING);
+    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+    USART_DEBUG((char*)strtmp);
+//    USART_SendBytess(USART1, (char*)strtmp);
+    Wptr_YING = 0;
+    Wptr_mode = 0;
+    return REV_33_YING;
+}
+//功能：发送纸币器可接收纸币类型指令34H，数据区4字节
+void DET_BILL_TYPE_ZHI(u8 mode)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        switch(mode)
+        {
+            case 1:
+                Send_BILL_TYPE_ZHI(1);       //设置纸币器的可接收货币和暂保留的可接收货币
+                break;
+
+            case 2:
+                Send_BILL_TYPE_ZHI(2);       //设置纸币器的不接收货币和暂保留的可接收货币
+                break;
+
+            default:
+                return;
+        }
+
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+//功能：处理处于暂保留位置的纸币
+//入口参数：mode为1接收钱，mode为2退回钱
+void DET_ESCROW_ZHI(u8 mode)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        switch(mode)
+        {
+            case 1:
+                Send_ESCROW_ZHI(1);       //从暂保留位置收钱
+                break;
+
+            case 2:
+                Send_ESCROW_ZHI(2);       //从暂保留位置退回钱
+                break;
+
+            default:
+                return;
+        }
+
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+
+//功能：发送读取现金盒钱数指令36H
+//入口参数：num_coin为钱币张数
+//返回值：CHK有误，返回0;钱盒满，返回2;钱盒未满，返回1
+u8 DET_STACKER_ZHI(u16* num_coin)
+{
+    Wptr_mode = 0x36;
+    Wptr_YING = 0;
+
+    while(1)
+    {
+        Send_STACKER_ZHI();         //现金盒钱数
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(Wptr_YING == (LEN_STACKER_ZHI + 1))       //判断接受的数据长度
+        {
+//            Wptr_YING = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        Wptr_YING = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+
+    if(0 == Get_CHK(BUF_0A, Wptr_YING))
+    {
+        Wptr_YING = 0;   //清零，记录下一条指令回复的长度
+        Wptr_mode = 0;
+        return 0;   //CHK有误
+    }
+
+    *num_coin = MAKEWORD(BUF_0A[1], (BUF_0A[0] & 0x7F));    //字节1最高位清零，获取钱数
+
+    if(BUF_0A[0] & 0x80)        //钱盒满
+    {
+        Wptr_YING = 0;   //清零，记录下一条指令回复的长度
+        Wptr_mode = 0;
+        return 2;   //钱盒满
+    }
+
+    Wptr_YING = 0;   //清零，记录下一条指令回复的长度
+    Wptr_mode = 0;
+    return 1;       //钱盒未满
+}
+//功能：发送扩展指令0X3700
+void DET_IDENTIFICATION_ZHI(void)
+{
+    rev_data_len = 0;   //清零，记录下一条指令回复的长度
+
+    while(1)
+    {
+        Send_IDENTIFICATION_ZHI();     //发送扩展指令0x3700
+#if(FLAG_WAIT == 1)
+        delay_ms(TIME_DELAY_ZHI);
+#endif
+
+        if(rev_data_len == (LEN_IDENTIFICATION_ZHI + 1))       //判断接受的数据长度
+        {
+            rev_data_len = 0;   //清零，记录下一条指令回复的长度
+            break;
+        }
+
+        rev_data_len = 0;   //清零，记录下一条指令回复的长度
+    }
+
+    USART_SendByte(USART2, 0x00);       //ACK
+    return;
+}
+
 
 //功能：发送复位指令30H
 void Send_RESET_ZHI(void)
@@ -147,33 +572,67 @@ void Send_POLL_ZHI(void)
     USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
 //功能：发送纸币器可接收纸币类型指令34H，数据区4字节
-void Send_BILL_TYPE_ZHI(void)
+//入口参数：mode为模式位，值为1，可收钱；值为2，不可收钱
+void Send_BILL_TYPE_ZHI(u8 mode)
 {
     u16 cmd = 0;
     u8 coin_dat[4] = {0};
     u8 num = 0;     //数据区总和
     coin_dat[0] = 0x00;    //发送的第一个字节，实际顺序待测
-    coin_dat[1] = 0x0F;
     coin_dat[2] = 0x00;
-    coin_dat[3] = 0x0F;
-    num = (u8)(0x34 + 0x00 + 0x0f + 0x0f);
+    coin_dat[3] = 0x0F;     //暂保留区
+
+    switch(mode)
+    {
+        case 1:
+            coin_dat[1] = 0x0F;     //可收钱，34 00 0F 00 0FH
+            num = (u8)(0x34 + 0x00 + 0x0f + 0x0f);
+            break;
+
+        case 2:
+            coin_dat[1] = 0x00;     //不可收钱，34 00 00 00 0FH
+            num = (u8)(0x34 + 0x00 + 0x00 + 0x0f);
+            break;
+
+        default:
+            return;
+    }
+
     cmd = (0x01 << 8) | 0x34;  //对应模式位置1，表示地址字节
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
     USART_SendBytes(USART2, coin_dat, 4);
     USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
 //功能：发送暂保留状态指令35H，数据区1字节
-void Send_ESCROW_ZHI(u8 dat)
+//入口参数：mode为1，表示从暂保留收钱；mode为2表示从暂保留返回钱
+void Send_ESCROW_ZHI(u8 mode)
 {
     u16 cmd = 0;
     u8 num = 0;     //数据区总和
+    u8 dat = 0;     //数据区，单字节
+
+    switch(mode)
+    {
+        case 1:
+            dat = 0x01;
+            break;
+
+        case 2:
+            dat = 0x00;
+            break;
+
+        default:
+            return;
+//            break;
+    }
+
     num = (u8)(0x35 + dat);
     cmd = (0x01 << 8) | 0x35;  //对应模式位置1，表示地址字节
     USART_Send2Byte(USART2, cmd);   //发送对应地址字节
     USART_Send2Byte(USART2, dat);   //发送数据，对应支出硬币的数值
     USART_Send2Byte(USART2, num);           //发送CHK检验和
 }
-//功能：发送复位指令36H
+//功能：发送读取现金盒钱数指令36H
 void Send_STACKER_ZHI(void)
 {
     u16 cmd = 0;
