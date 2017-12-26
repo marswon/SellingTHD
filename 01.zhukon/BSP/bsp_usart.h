@@ -26,6 +26,7 @@
 #define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
+extern char dat_quehuo[2];        //缓存取货几行几列，用于纸币器使用
 extern u8 price_num;       //货物价格
 extern bool flag_take_huowu;
 extern bool flag_chu_success;

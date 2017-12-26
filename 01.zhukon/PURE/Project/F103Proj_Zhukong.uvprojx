@@ -609,6 +609,16 @@
               <FileType>5</FileType>
               <FilePath>..\..\BSP\bsp_zhibiqi.h</FilePath>
             </File>
+            <File>
+              <FileName>bsp_coin.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\bsp_coin.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_coin.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\BSP\bsp_coin.h</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

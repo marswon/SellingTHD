@@ -1,7 +1,4 @@
 #include "bsp_yingbiqi.h"
-
-//硬币器，纸币器初始化，串口指令延时等待标志位
-#define FLAG_WAIT   1
 //硬币器延时时间，单位为ms
 #define TIME_DELAY_YING     100
 
@@ -10,12 +7,11 @@ u8 USART2_dat[50] = {0};
 u8 rev_data_len = 0;        //串口2回复数据长度，用于没有收到数据继续发送
 
 /********************* 硬币器 ********************/
-u16 tmp_TUBE_YING = 0;      //硬币器钱管满状态缓存
-static u8 pre_05_TUBE = 0;   //硬币器5角钱数量，上次取货后5角数量
-static u8 pre_10_TUBE = 0;   //硬币器1元钱数量，上次取货后1元数量
+//u16 tmp_TUBE_YING = 0;      //硬币器钱管满状态缓存
+u8 pre_05_TUBE = 0;   //硬币器5角钱数量，上次取货后5角数量
+u8 pre_10_TUBE = 0;   //硬币器1元钱数量，上次取货后1元数量
 //u8 CNT_05_YING = 0;     //投入5角的总数
 //u8 CNT_10_YING = 0;    //投入1元的总数
-extern char dat_quehuo[2];        //缓存取货几行几列，用于硬币器使用
 //u8 num_coin = 0;   //投入钱币的总金额
 //static u8 num_PAY = 0;      //支出硬币金额
 //上电初始化之后，5角和1元的枚数，用于计算投入的总枚数
@@ -23,120 +19,6 @@ static u8 Init_05_YING = 0;
 static u8 Init_10_YING = 0;
 
 char strtmp[100] = {0};     //打印调试信息缓存信息
-
-//功能：发送常规命令函数，适用于纸币器和硬币器
-//入口参数：basic_cmd为发送的常规命令字节，data为需要发送数据区常规指令的数据
-//返回值：正常返回1，异常返回0
-//说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址。命令后，接着CHK检验和。
-u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data)
-{
-    u16 cmd = 0;
-    u8 dat_len = 0, i = 0;
-    u8 dat[5] = {0};
-    u8 num = 0;     //数据区总和
-
-    if(IS_COIN_BASIC_COMMAND(basic_cmd) == 0)     //常规命令校验
-    {
-        return 0;   //如果不是定义的命令,会直接退出
-    }
-
-    //根据常规指令设置数据区长度，纸币器和硬币器
-    if((COIN_TYPE_YING == basic_cmd) || (BILL_TYPE_ZHI == basic_cmd))
-    {
-        dat_len = DAT_COIN_TYPE;    //VMC数据长度为4
-    }
-    else if((DISPENSE_YING == basic_cmd) || (ESCROW_ZHI == basic_cmd))
-    {
-        dat_len = DAT_DISPENSE;    //VMC数据长度为1
-    }
-    else if(SECURITY_ZHI == basic_cmd)
-    {
-        dat_len = DAT_SECURITY_ZHI;    //VMC数据长度为2
-    }
-
-    cmd = (0x01 << 8) | basic_cmd;  //对应模式位置1，表示地址字节
-    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
-    USART_Send2Byte(USART1, cmd);   //PC调试，发送对应地址字节
-
-    if(dat_len != 0)    //常规指令对应数据区初始化及发送指令
-    {
-        for(i = 0; i < dat_len; i++)
-        {
-            dat[i] = data[i];
-            USART_SendByte(USART2, dat[i]);     //发送基础指令数据区
-            USART_SendByte(USART1, dat[i]);     //PC调试，发送基础指令数据区
-            num += dat[i];      //检验和
-        }
-    }
-
-    cmd = (basic_cmd + num) & 0x00ff;          //计算校验和
-    USART_Send2Byte(USART2, cmd);           //发送CHK检验和
-    USART_Send2Byte(USART1, cmd);           //PC调试，发送CHK检验和
-//    delay_ms(10);
-//    USART_Send2Byte(USART2, 0x00);       //ACK
-//    USART_Send2Byte(USART1, 0x00);
-    return 1;
-}
-
-//功能：发送扩展命令函数，适用于纸币器和硬币器
-//入口参数：exp_cmd为发送的扩展命令字节，data为需要发送数据区扩展指令的数据
-//说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址
-u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
-{
-    u16 cmd = 0;
-    u8 dat_len = 0, i = 0;
-    u8 dat[5] = {0};
-    u8 num = 0;     //数据区总和
-
-    if((IS_COIN_EXP_COMMAND_YING(exp_cmd) == 0) && (IS_COIN_EXP_COMMAND_ZHI(exp_cmd) == 0))     //地址字节命令校验
-    {
-        return 0;   //如果不是定义的命令,会直接退出
-    }
-
-    //根据扩展指令设置数据区长度
-    if((FEATURE_ENABLE_YING == exp_cmd) || (FEATURE_ENABLE_ZHI == exp_cmd))
-    {
-        dat_len = DAT_FEATURE_ENABLE_YING;    //VMC数据长度为4
-    }
-    else if(PAYOUT_YING == exp_cmd)
-    {
-        dat_len = DAT_PAYOUT_YING;    //VMC数据长度为1
-    }
-
-    if(IS_COIN_EXP_COMMAND_YING(exp_cmd) == 1)     //硬币器扩展指令
-    {
-        cmd = (0x01 << 8) | 0x0F;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x0F
-        USART_Send2Byte(USART2, cmd);       //发送对应地址字节
-        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
-    }
-    else
-    {
-        //纸币器扩展指令
-        cmd = (0x01 << 8) | 0x37;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x37
-        USART_Send2Byte(USART2, cmd);       //发送对应地址字节
-        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
-    }
-
-    cmd = (exp_cmd & 0xFF);             //副指令，实际测试结果不需要地址位置1
-    USART_Send2Byte(USART2, cmd);       //发送副指令
-    USART_Send2Byte(USART1, cmd);       //PC调试，发送副指令
-
-    if(dat_len != 0)    //扩展指令对应数据区初始化及发送指令
-    {
-        for(i = 0; i < dat_len; i++)
-        {
-            dat[i] = data[i];
-            USART_SendByte(USART2, dat[i]);     //发送扩展数据区
-            USART_SendByte(USART1, dat[i]);     //PC调试，发送扩展数据区
-            num += dat[i];      //检验和
-        }
-    }
-
-    cmd = ((exp_cmd >> 0x08) + (exp_cmd & 0xFF) + num) & 0x00ff;       //计算校验和
-    USART_SendByte(USART2, (u8) cmd);          //发送CHK检验和
-    USART_SendByte(USART1, (u8) cmd);          //PC调试，发送CHK检验和
-    return 1;
-}
 
 //功能：硬币器初始化
 //入口参数：
@@ -176,8 +58,8 @@ void YingBiQi_USE(void)
 {
     u16 num_coin = 0;   //投入钱币的总金额
     static u8 balance = 0;  //投入货币取货后投入的余额
-    u8 tmp_05_TUBE = 0;
-    u8 tmp_10_TUBE = 0;
+    u8 num_05_TUBE = 0;
+    u8 num_10_TUBE = 0;
     u8 rev = 0;
     u8 num_PAY = 0;      //支出硬币金额
     rev = DET_POLL_YING();    //发送0B,回复机器动作类型
@@ -189,7 +71,7 @@ void YingBiQi_USE(void)
 
         do
         {
-            rev = DET_TUBE_STATUS_YING(&tmp_05_TUBE, &tmp_10_TUBE);     //发送0A，回复硬币枚数
+            rev = DET_TUBE_STATUS_YING(&num_05_TUBE, &num_10_TUBE);     //发送0A，回复硬币枚数
         }
         while(rev == 0);        //CHK校验和有误
 
@@ -213,10 +95,10 @@ void YingBiQi_USE(void)
         }
 
         //自上次出货后投入的硬币数
-        tmp_05_TUBE -= pre_05_TUBE;
-        tmp_10_TUBE -= pre_10_TUBE;
+        num_05_TUBE -= pre_05_TUBE;
+        num_10_TUBE -= pre_10_TUBE;
 //        USART_SendByte(USART1, rev);
-        num_PAY = tmp_05_TUBE + tmp_10_TUBE * 2 + balance / 5;      //连同余额和新投入的硬币一起支出
+        num_PAY = num_05_TUBE + num_10_TUBE * 2 + balance / 5;      //连同余额和新投入的硬币一起支出
         DET_PAYOUT_YING(num_PAY);            //支出指定金额硬币
         DET_PAYOUT_VALUE_POLL_YING();   //支出完成，回复ACK结束
 
@@ -255,17 +137,17 @@ void YingBiQi_USE(void)
     {
         do
         {
-            rev = DET_TUBE_STATUS_YING(&tmp_05_TUBE, &tmp_10_TUBE);     //发送0A，回复硬币枚数
+            rev = DET_TUBE_STATUS_YING(&num_05_TUBE, &num_10_TUBE);     //发送0A，回复硬币枚数
         }
         while(rev == 0);        //CHK校验和有误
 
-        sprintf((char*)strtmp, "TUBE:%d tmp_05_TUBE:%d tmp_10_TUBE:%d\r\n", tmp_TUBE_YING, tmp_05_TUBE, tmp_10_TUBE);
+        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d\r\n", num_05_TUBE, num_10_TUBE);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
         USART_DEBUG((char*)strtmp);
         //自上次出货后投入的硬币数
-        tmp_05_TUBE = tmp_05_TUBE - pre_05_TUBE;
-        tmp_10_TUBE = tmp_10_TUBE - pre_10_TUBE;
-        num_coin = tmp_05_TUBE * 5 + tmp_10_TUBE * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
+        num_05_TUBE = num_05_TUBE - pre_05_TUBE;
+        num_10_TUBE = num_10_TUBE - pre_10_TUBE;
+        num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
 
         if(num_coin >= price_num)      //高于指定货物的价格
         {
@@ -961,4 +843,116 @@ u8 Get_CHK(u8* str, u8 str_len)
     else
         return 0;
 }
+//功能：发送常规命令函数，适用于纸币器和硬币器
+//入口参数：basic_cmd为发送的常规命令字节，data为需要发送数据区常规指令的数据
+//返回值：正常返回1，异常返回0
+//说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址。命令后，接着CHK检验和。
+//u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data)
+//{
+//    u16 cmd = 0;
+//    u8 dat_len = 0, i = 0;
+//    u8 dat[5] = {0};
+//    u8 num = 0;     //数据区总和
 
+//    if(IS_COIN_BASIC_COMMAND(basic_cmd) == 0)     //常规命令校验
+//    {
+//        return 0;   //如果不是定义的命令,会直接退出
+//    }
+
+//    //根据常规指令设置数据区长度，纸币器和硬币器
+//    if((COIN_TYPE_YING == basic_cmd) || (BILL_TYPE_ZHI == basic_cmd))
+//    {
+//        dat_len = DAT_COIN_TYPE;    //VMC数据长度为4
+//    }
+//    else if((DISPENSE_YING == basic_cmd) || (ESCROW_ZHI == basic_cmd))
+//    {
+//        dat_len = DAT_DISPENSE;    //VMC数据长度为1
+//    }
+//    else if(SECURITY_ZHI == basic_cmd)
+//    {
+//        dat_len = DAT_SECURITY_ZHI;    //VMC数据长度为2
+//    }
+
+//    cmd = (0x01 << 8) | basic_cmd;  //对应模式位置1，表示地址字节
+//    USART_Send2Byte(USART2, cmd);   //发送对应地址字节
+//    USART_Send2Byte(USART1, cmd);   //PC调试，发送对应地址字节
+
+//    if(dat_len != 0)    //常规指令对应数据区初始化及发送指令
+//    {
+//        for(i = 0; i < dat_len; i++)
+//        {
+//            dat[i] = data[i];
+//            USART_SendByte(USART2, dat[i]);     //发送基础指令数据区
+//            USART_SendByte(USART1, dat[i]);     //PC调试，发送基础指令数据区
+//            num += dat[i];      //检验和
+//        }
+//    }
+
+//    cmd = (basic_cmd + num) & 0x00ff;          //计算校验和
+//    USART_Send2Byte(USART2, cmd);           //发送CHK检验和
+//    USART_Send2Byte(USART1, cmd);           //PC调试，发送CHK检验和
+////    delay_ms(10);
+////    USART_Send2Byte(USART2, 0x00);       //ACK
+////    USART_Send2Byte(USART1, 0x00);
+//    return 1;
+//}
+
+////功能：发送扩展命令函数，适用于纸币器和硬币器
+////入口参数：exp_cmd为发送的扩展命令字节，data为需要发送数据区扩展指令的数据
+////说明：MDB协议定义了地址字节的格式，低3位为命令值，高5位为硬币识别器地址
+//u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
+//{
+//    u16 cmd = 0;
+//    u8 dat_len = 0, i = 0;
+//    u8 dat[5] = {0};
+//    u8 num = 0;     //数据区总和
+
+//    if((IS_COIN_EXP_COMMAND_YING(exp_cmd) == 0) && (IS_COIN_EXP_COMMAND_ZHI(exp_cmd) == 0))     //地址字节命令校验
+//    {
+//        return 0;   //如果不是定义的命令,会直接退出
+//    }
+
+//    //根据扩展指令设置数据区长度
+//    if((FEATURE_ENABLE_YING == exp_cmd) || (FEATURE_ENABLE_ZHI == exp_cmd))
+//    {
+//        dat_len = DAT_FEATURE_ENABLE_YING;    //VMC数据长度为4
+//    }
+//    else if(PAYOUT_YING == exp_cmd)
+//    {
+//        dat_len = DAT_PAYOUT_YING;    //VMC数据长度为1
+//    }
+
+//    if(IS_COIN_EXP_COMMAND_YING(exp_cmd) == 1)     //硬币器扩展指令
+//    {
+//        cmd = (0x01 << 8) | 0x0F;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x0F
+//        USART_Send2Byte(USART2, cmd);       //发送对应地址字节
+//        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
+//    }
+//    else
+//    {
+//        //纸币器扩展指令
+//        cmd = (0x01 << 8) | 0x37;           //对应模式位置1，表示地址字节,所以扩展字节高位都是0x37
+//        USART_Send2Byte(USART2, cmd);       //发送对应地址字节
+//        USART_Send2Byte(USART1, cmd);       //PC调试，发送对应地址字节
+//    }
+
+//    cmd = (exp_cmd & 0xFF);             //副指令，实际测试结果不需要地址位置1
+//    USART_Send2Byte(USART2, cmd);       //发送副指令
+//    USART_Send2Byte(USART1, cmd);       //PC调试，发送副指令
+
+//    if(dat_len != 0)    //扩展指令对应数据区初始化及发送指令
+//    {
+//        for(i = 0; i < dat_len; i++)
+//        {
+//            dat[i] = data[i];
+//            USART_SendByte(USART2, dat[i]);     //发送扩展数据区
+//            USART_SendByte(USART1, dat[i]);     //PC调试，发送扩展数据区
+//            num += dat[i];      //检验和
+//        }
+//    }
+
+//    cmd = ((exp_cmd >> 0x08) + (exp_cmd & 0xFF) + num) & 0x00ff;       //计算校验和
+//    USART_SendByte(USART2, (u8) cmd);          //发送CHK检验和
+//    USART_SendByte(USART1, (u8) cmd);          //PC调试，发送CHK检验和
+//    return 1;
+//}

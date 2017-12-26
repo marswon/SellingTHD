@@ -82,7 +82,7 @@ void DET_SECURITY_ZHI(void);
 u8 DET_POLL_ZHI(void);
 //功能：发送纸币器可接收纸币类型指令34H，数据区4字节
 void DET_BILL_TYPE_ZHI(u8 mode);
-//功能：处理处于暂保留位置的纸币
+//功能：处理处于暂保留位置的纸币35H
 void DET_ESCROW_ZHI(u8 mode);
 //功能：发送读取现金盒钱数指令36H
 u8 DET_STACKER_ZHI(u16* num_coin);

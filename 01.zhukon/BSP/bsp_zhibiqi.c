@@ -2,14 +2,8 @@
 
 //纸币器延时时间，单位为ms
 #define TIME_DELAY_ZHI      100
-//硬币器，纸币器初始化，串口指令延时等待标志位
-#define FLAG_WAIT   1
 
 /********************* 纸币器 ********************/
-
-u8 rev_coin = 0;
-
-extern char dat_quehuo[2];        //缓存取货几行几列，用于纸币器使用
 extern char strtmp[100];     //打印调试信息缓存信息
 static u16 num_ZHIBI = 0;          //现金盒纸币的张数
 
@@ -48,6 +42,7 @@ void ZhiBiQi_Init(void)
 void ZhiBiQi_USE(void)
 {
     u8 rev = 0;
+    static u8 num_ZHIBI = 0;     //纪录投入纸币的金额
     u16 num_coin = 0;
     static u8 balance = 0;  //投入货币取货后投入的余额
     rev = DET_POLL_ZHI();       //POLL指令，33H
@@ -59,27 +54,26 @@ void ZhiBiQi_USE(void)
         case 7:
         case 8:
             DET_BILL_TYPE_ZHI(2);       //禁止收钱
-            delay_ms(100);
             DET_ESCROW_ZHI(1);      //接收钱
             break;
 
         case 9:
-            rev_coin += 1;          //钱数自增1元
+            num_ZHIBI += 1;          //钱数自增1元
             DET_BILL_TYPE_ZHI(1);       //发送可收钱
             break;
 
         case 10:
-            rev_coin += 5;          //钱数自增5元
+            num_ZHIBI += 5;          //钱数自增5元
             DET_BILL_TYPE_ZHI(1);       //发送可收钱
             break;
 
         case 11:
-            rev_coin += 10;         //钱数自增10元
+            num_ZHIBI += 10;         //钱数自增10元
             DET_BILL_TYPE_ZHI(1);       //发送可收钱
             break;
 
         case 12:
-            rev_coin += 20;         //钱数自增20元
+            num_ZHIBI += 20;         //钱数自增20元
             DET_BILL_TYPE_ZHI(1);       //发送可收钱
             break;
 
@@ -87,14 +81,14 @@ void ZhiBiQi_USE(void)
             break;
     }
 
-    sprintf((char*)strtmp, "rev_coin : %d\r\n", rev_coin);    //打印投入金额
+    sprintf((char*)strtmp, "num_ZHIBI : %d\r\n", num_ZHIBI);    //打印投入金额
     USART_DEBUG((char*)strtmp);
 
     if(flag_take_huowu == TRUE)        //安卓->主控，发送"取货"命令
     {
-//        sprintf((char*)strtmp, "rev_coin : %d\r\n", rev_coin);    //打印投入金额
+//        sprintf((char*)strtmp, "num_ZHIBI : %d\r\n", num_ZHIBI);    //打印投入金额
 //        USART_DEBUG((char*)strtmp);
-        num_coin = rev_coin * 10 + balance;       //取货，投入的钱数
+        num_coin = num_ZHIBI * 10 + balance;       //取货，投入的钱数
 
         if(num_coin >= price_num)      //高于指定货物的价格
         {
@@ -105,7 +99,7 @@ void ZhiBiQi_USE(void)
             balance = num_coin - price_num;     //更新余额
             sprintf((char*)strtmp, "balance : %d\r\n", balance);    //打印余额
             USART_DEBUG((char*)strtmp);
-            rev_coin = 0;       //清零
+            num_ZHIBI = 0;       //清零
             flag_take_huowu = FALSE;    //判定该次取货完成
             delay_ms(1000);         //延时1s
             DET_BILL_TYPE_ZHI(1);       //发送可收钱

@@ -57,7 +57,6 @@ int main(void)
 
                 if(ntmp[i - 1] == 0x0D && ntmp[i] == 0x0A) // 判断包尾
                 {
-//                    USART_SendBytess(USART1, ntmp);     //打印收到的命令
                     nlen = MAKEWORD(ntmp[i - 4], ntmp[i - 5]); // 获取数据包长度
 
                     if(i > nlen)
@@ -223,8 +222,6 @@ int main(void)
                 DET_POLL_YING();   //0B接收到ACK
                 delay_ms(1000);
             }
-
-//            Send_POLL_YING();
         }
         else if(flag_test == 0x15)    //发送硬币类型0C0003FFFFH
         {
@@ -254,17 +251,7 @@ int main(void)
         else if(flag_test == 0x1A)    //发送扩展指令0x0F02
         {
             flag_test = 0;
-//            DET_PAYOUT_YING(0x01);
             DET_PAYOUT_YING(8);      //支出硬币，数值为硬币计算系数的倍数，就是5角的倍数
-//            Send_PAYOUT_YING(3);     //发送扩展指令0x0F02和数据区
-//            while(1)
-//            {
-//                Send_PAYOUT_VALUE_POLL_YING();     //发送扩展指令0x0F04
-//                delay_ms(100);
-//                USART_SendByte(USART2, 0x00);       //ACK
-//                delay_ms(1000);
-//            }
-//            DET_PAYOUT_VALUE_POLL_YING();
         }
         else if(flag_test == 0x1B)    //发送扩展指令0x0F03
         {
@@ -432,20 +419,6 @@ int main(void)
             flag_test = 0;
             DET_ESCROW_ZHI(2);      //暂保留位置，退回钱
         }
-//        else if(flag_test == 15)     //开启PC打印
-//        {
-//            flag_test = 0;
-//            if(!flag_enable_debug)
-//            {
-//                flag_enable_debug = TRUE;
-//            }
-//            USART_DEBUG("debug\r\n");
-//        }
-//        else if(flag_test == 16)     //关闭PC打印
-//        {
-//            flag_test = 0;
-//            flag_enable_debug = FALSE;
-//        }
     }
 
 #endif
