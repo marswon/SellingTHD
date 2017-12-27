@@ -34,10 +34,11 @@ typedef enum
 #include "bsp_delay.h"
 #include "bsp_timer.h"
 #include "bsp_yingbiqi.h"
+#include "bsp_coin.h"
 
 #define   Version_Year       "27"       // year
 #define   Version_Month      "12"      // month
-#define   Version_Day        "26"      // day
+#define   Version_Day        "27"      // day
 
 
 //位带操作

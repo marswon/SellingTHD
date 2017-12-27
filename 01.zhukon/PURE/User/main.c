@@ -7,6 +7,7 @@
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
 extern bool flag_enable_debug;
+extern bool flag_huodao_det;
 
 int main(void)
 {
@@ -91,9 +92,14 @@ int main(void)
             }
         }
 
-//        YingBiQi_USE();         //硬币器使用
-        ZhiBiQi_USE();          //纸币器使用
-        delay_ms(100);
+        if(flag_huodao_det == FALSE)        //默认是带有纸币器和硬币器的正常取货流程
+        {
+//            YingBiQi_USE();         //硬币器使用
+//            ZhiBiQi_USE();          //纸币器使用
+            COIN_use();         //纸币器和硬币器联合使用
+//            delay_ms(100);
+        }
+
     }
 
 #else

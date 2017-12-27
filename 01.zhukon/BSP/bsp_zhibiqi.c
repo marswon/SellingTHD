@@ -36,7 +36,7 @@ void ZhiBiQi_Init(void)
 }
 
 
-//功能：纸币器工作
+//功能：纸币器单独工作
 //入口参数：
 //说明：纸币器要想检测纸币，必须循环发送指定指令。否则，机器不会检测纸币
 void ZhiBiQi_USE(void)
@@ -441,9 +441,9 @@ u8 DET_POLL_ZHI(void)
 //        default:
 //            break;
 //    }
-    sprintf((char*)strtmp, "REV : %d\r\n", REV_33_YING);
-    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-    USART_DEBUG((char*)strtmp);
+//    sprintf((char*)strtmp, "REV : %d\r\n", REV_33_YING);
+//    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+//    USART_DEBUG((char*)strtmp);
 //    USART_SendByte(USART1, REV_33_YING);    //打印返回值
     Wptr_YING = 0;
     Wptr_mode = 0;

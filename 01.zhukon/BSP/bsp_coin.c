@@ -4,11 +4,13 @@ extern char strtmp[100];     //打印调试信息缓存信息
 
 
 //功能：纸币器和硬币器联合工作
+//说明：投入纸币后，按下暂保留杆，会有同样的硬币数退回
 void COIN_use(void)
 {
     u16 num_coin = 0;   //投入钱币的总金额
     static u8 num_ZHIBI = 0;     //纪录投入纸币的金额
     static u8 balance = 0;  //投入货币取货后投入的余额
+    static u16 num_queqian = 0;     //纪录之前一次检测缺钱的数额
     u8 num_05_TUBE = 0;
     u8 num_10_TUBE = 0;
     u8 rev = 0;
@@ -18,7 +20,8 @@ void COIN_use(void)
     if(rev == 2)        //暂保留杆动作
     {
         rev = 0;
-        DET_COIN_DISENABLE_YING();      //禁止收钱
+        DET_COIN_DISENABLE_YING();  //硬币器禁止收钱
+        DET_BILL_TYPE_ZHI(2);       //纸币器禁止收钱
 
         do
         {
@@ -29,7 +32,7 @@ void COIN_use(void)
         switch(rev)     //硬币数0A指令返回值
         {
             case 1:     //5角钱.1元钱管都未满
-                USART_DEBUG("YINGBIQI : 5,10 NO FULL");
+//                USART_DEBUG("YINGBIQI : 5,10 NO FULL");
                 break;
 
             case 2:     //5角钱.1元钱管满
@@ -49,7 +52,9 @@ void COIN_use(void)
         num_05_TUBE -= pre_05_TUBE;
         num_10_TUBE -= pre_10_TUBE;
 //        USART_SendByte(USART1, rev);
-        num_PAY = num_05_TUBE + num_10_TUBE * 2 + balance / 5;      //连同余额和新投入的硬币一起支出
+        //连同余额和新投入的硬币，包括纸币对应的硬币数一起支出
+        num_PAY = num_05_TUBE + num_10_TUBE * 2 + balance / 5 + num_ZHIBI * 2;
+        num_ZHIBI = 0;      //纸币器钱数清零
         DET_PAYOUT_YING(num_PAY);            //支出指定金额硬币
         DET_PAYOUT_VALUE_POLL_YING();   //支出完成，回复ACK结束
 
@@ -60,16 +65,17 @@ void COIN_use(void)
         }
         while(rev == 0);        //CHK校验和有误
 
-        DET_COIN_ENABLE_YING();    //发送"可收钱"指令
+        DET_COIN_ENABLE_YING();    //硬币器发送"可收钱"指令
+        DET_BILL_TYPE_ZHI(1);       //纸币器发送可收钱
         balance = 0;        //余额清零
         flag_take_huowu = FALSE;    //先选货，投入硬币后，动作保留杆表示该次出货取消
     }
     else if(rev == 99)        //手动支出结束，需要更新硬币值
     {
         rev = 0;
-        sprintf((char*)strtmp, "REV : %d\r\n", rev);
-        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+//        sprintf((char*)strtmp, "REV : %d\r\n", rev);
+//        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+//        USART_DEBUG((char*)strtmp);
         DET_COIN_DISENABLE_YING();      //禁止收钱
 
         //发送0A，纪录下硬币枚数
@@ -81,7 +87,7 @@ void COIN_use(void)
 
         DET_COIN_ENABLE_YING();    //发送"可收钱"指令
     }
-    
+
     rev = DET_POLL_ZHI();       //纸币器POLL指令，33H
 
     switch(rev)
@@ -96,7 +102,7 @@ void COIN_use(void)
 
         case 9:
             num_ZHIBI += 1;          //钱数自增1元
-            DET_BILL_TYPE_ZHI(1);       //发送可收钱
+            DET_BILL_TYPE_ZHI(1);       //发送可收钱，直到真正收入到钱盒
             break;
 
         case 10:
@@ -118,9 +124,9 @@ void COIN_use(void)
             break;
     }
 
-    sprintf((char*)strtmp, "num_ZHIBI : %d\r\n", num_ZHIBI);    //打印投入金额
-    USART_DEBUG((char*)strtmp);
-    
+//    sprintf((char*)strtmp, "num_ZHIBI : %d\r\n", num_ZHIBI);    //打印投入金额
+//    USART_DEBUG((char*)strtmp);
+
     if(flag_take_huowu == TRUE)        //安卓->主控，发送"取货"命令
     {
         do
@@ -167,9 +173,17 @@ void COIN_use(void)
         else
         {
             //取货，投入金额不足，主控->安卓
-            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), LBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), dat_quehuo, 2);     //主控->电机，取货
-            sprintf(strtmp, "USARTCMD_ZHUKON_ANZHUO_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKON_ANZHUO_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], price_num);
-            USART_DEBUG((char*)strtmp);
+            num_coin = price_num - num_coin;        //计算当前缺钱的数额
+            dat_quehuo[2] = num_coin;           //发送给安卓板
+
+            if(num_queqian != num_coin)
+            {
+                Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), LBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), dat_quehuo, 3);     //主控->电机，取货
+                sprintf(strtmp, "USARTCMD_ZHUKON_ANZHUO_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKON_ANZHUO_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], dat_quehuo[2]);
+                USART_DEBUG((char*)strtmp);
+            }
+
+            num_queqian = num_coin;         //更新之前缺钱的数额
         }
     }
 }

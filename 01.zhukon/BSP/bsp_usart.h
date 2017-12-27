@@ -26,7 +26,7 @@
 #define UART4_BAUDRATE                        9600
 #define UART5_BAUDRATE                        2400
 
-extern char dat_quehuo[2];        //缓存取货几行几列，用于纸币器使用
+extern char dat_quehuo[3];        //缓存取货几行几列，用于纸币器使用
 extern u8 price_num;       //货物价格
 extern bool flag_take_huowu;
 extern bool flag_chu_success;
@@ -108,7 +108,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define USARTCMD_ZHUKON_ANZHUO_CoinNoEnough             0x0120
 //纸币器现金盒装满，主控->安卓
 #define USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL                 0x0119
-
+//单独测试货道电机，不需要纸币器和硬币器参与
+#define USARTCMD_ANDROID_ZHUKONG_HUODAO                 0x0121
 
 //USART发送9位数据
 void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);

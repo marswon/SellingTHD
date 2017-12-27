@@ -51,7 +51,7 @@ void YingBiQi_Init(void)
     pre_10_TUBE = Init_10_YING;      //一元钱数量
 }
 
-//功能：硬币器使用
+//功能：硬币器单独使用
 //入口参数：
 //说明：硬币器要想检测硬币，必须循环发送指定指令。否则，机器不会检测硬币
 void YingBiQi_USE(void)
