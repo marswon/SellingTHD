@@ -110,6 +110,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 #define USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL                 0x0119
 //单独测试货道电机，不需要纸币器和硬币器参与
 #define USARTCMD_ANDROID_ZHUKONG_HUODAO                 0x0121
+//取货后回复安卓余额
+#define USARTCMD_ZHUKON_ANZHUO_Reply_Balance            0x0122
 
 //USART发送9位数据
 void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);
