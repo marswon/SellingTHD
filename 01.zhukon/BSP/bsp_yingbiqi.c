@@ -38,6 +38,7 @@ void YingBiQi_Init(void)
     while(!(1 == DET_SEND_DIAGNOSTIC_YING()));      //初始化必须接收到03 00 03
 
     DET_COIN_ENABLE_YING();
+    //延时3s保证初始化的钱数是正确的
     delay_ms(1000);
     delay_ms(1000);
     delay_ms(1000);

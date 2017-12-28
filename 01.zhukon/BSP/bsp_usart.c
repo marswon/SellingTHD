@@ -594,6 +594,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             else if(*Dat == 0x55)
             {
                 flag_huodao_det = FALSE;    //开启硬币器和纸币器的使用，不检测货道电机运行，正常取货
+                flag_take_huowu = FALSE;    //用于纸币器和硬币器检测取货命令,保证下次开启纸币器和硬币器检测后不会立即出货
                 USART_SendBytess(USART1, "MOTOR huodao nouse\r\n");     //提示信息
             }
         }
