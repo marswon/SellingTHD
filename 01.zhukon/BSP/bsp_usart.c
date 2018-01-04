@@ -27,7 +27,7 @@ u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
 char dat_quehuo[3] = {0};     //缓存取货几行几列，用于硬币器使用
 
-bool flag_COIN_print = FALSE;       //纸币器，硬币器实时打印标志位
+//bool flag_COIN_print = FALSE;       //纸币器，硬币器实时打印标志位
 
 //printf函数重定向到串口1
 #if 1
@@ -131,11 +131,10 @@ void USART2_IRQHandler(void)
 //        USART2_COIN_BufWrite(nTemp);
         BufWrite_COIN(nTemp);         //纸币器，硬币器回复数据专用缓存
 //        USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印到PC
-
-        if(flag_COIN_print == TRUE)        //根据指令开关纸币器回复实时打印
-        {
-            USART_SendByte(USART1, nTemp);
-        }
+//        if(flag_COIN_print == TRUE)        //根据指令开关纸币器回复实时打印
+//        {
+//            USART_SendByte(USART1, nTemp);
+//        }
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -566,8 +565,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             dat_quehuo[0] = *Dat;       //取货行号
             dat_quehuo[1] = *(Dat + 1); //取货列号
             price_num = *(Dat + 2);     //货物价格
-            sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1], Dat[2]);
-            USART_DEBUG(strtmp);
+//            sprintf(strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, Dat[0], Dat[1], Dat[2]);
+//            USART_DEBUG(strtmp);
 
             if(flag_huodao_det == TRUE)     //单独测试货道电机运行
             {
@@ -687,15 +686,26 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT:%04X\r\n", USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT);
             USART_DEBUG(strtmp);
         }
-        else if(Data == 0x01FB) // 开启纸币器接收数据实时打印
+        else if(Data == USARTCMD_ANDROID_ZHUKONG_GetBalance)    //安卓查询余额指令，回复安卓上次取货后，投入的金额
         {
-            flag_COIN_print = TRUE;
-            USART_SendBytess(USART1, "COIN print\r\n");     //提示信息
+            char str[2] = {0};
+            u16 coin_num = 0;
+            coin_num = GetBalance();
+            str[0] = HBYTE(coin_num);    //余额低字节
+            str[1] = LBYTE(coin_num);    //余额高字节
+            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_GetBalance), LBYTE(USARTCMD_ANDROID_ZHUKONG_GetBalance), str, 2);
+            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetBalance: %04X, %s\r\n", USARTCMD_ANDROID_ZHUKONG_GetBalance, str);
+            USART_DEBUG(strtmp);
         }
-        else if(Data == 0x01FC) // 关闭纸币器接收数据实时打印
-        {
-            flag_COIN_print = FALSE;
-        }
+//        else if(Data == 0x01FB) // 开启纸币器接收数据实时打印
+//        {
+//            flag_COIN_print = TRUE;
+//            USART_SendBytess(USART1, "COIN print\r\n");     //提示信息
+//        }
+//        else if(Data == 0x01FC) // 关闭纸币器接收数据实时打印
+//        {
+//            flag_COIN_print = FALSE;
+//        }
         else if(Data == 0x01FE) // 开启debug打印
         {
             if(!flag_enable_debug)
@@ -719,7 +729,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 //功能：软件复位操作
 void SoftwareRESET(void)
 {
-    __set_FAULTMASK(1);     // 关闭所有中端
+    __set_FAULTMASK(1);     // 关闭所有中断
     NVIC_SystemReset();     //软件复位，类似于按下RESET按键
 }
 

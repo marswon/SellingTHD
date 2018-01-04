@@ -540,14 +540,14 @@
               <FilePath>..\User\stm32f10x_it.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_common.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\BSP\bsp_common.h</FilePath>
-            </File>
-            <File>
               <FileName>bsp_common.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\bsp_common.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_common.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\BSP\bsp_common.h</FilePath>
             </File>
             <File>
               <FileName>bsp_delay.c</FileName>

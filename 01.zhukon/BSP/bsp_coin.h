@@ -14,6 +14,7 @@ extern u8 pre_10_TUBE;   //硬币器1元钱数量，上次取货后1元数量
 
 //功能：纸币器和硬币器联合工作
 void COIN_use(void);
-
+//功能：查询目前可用于取货的金额
+u16 GetBalance(void);
 #endif
 

@@ -23,7 +23,7 @@ typedef enum
 #define MAKEWORD(bLow,bHigh)   ((unsigned short)(((unsigned char)(bLow))|(((unsigned short)((unsigned char)(bHigh)))<<8)))
 
 //硬币器，纸币器初始化，串口指令延时等待标志位
-#define FLAG_WAIT   1
+//#define FLAG_WAIT   1
 
 #include "bsp_usart.h"
 #include "bsp_gpio.h"
@@ -36,9 +36,9 @@ typedef enum
 #include "bsp_yingbiqi.h"
 #include "bsp_coin.h"
 
-#define   Version_Year       "27"       // year
-#define   Version_Month      "12"      // month
-#define   Version_Day        "28"      // day
+#define   Version_Year       "28"       // year
+#define   Version_Month      "01"      // month
+#define   Version_Day        "04"      // day
 
 
 //位带操作

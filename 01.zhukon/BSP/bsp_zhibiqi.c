@@ -1,7 +1,7 @@
 #include "bsp_zhibiqi.h"
 
-//纸币器延时时间，单位为ms
-#define TIME_DELAY_ZHI      100
+//纸币器使用的标志位，默认都是不需要使用的
+#define flag_ZhiBiQi_USE   0
 
 /********************* 纸币器 ********************/
 extern char strtmp[100];     //打印调试信息缓存信息
@@ -26,7 +26,7 @@ void ZhiBiQi_Init(void)
 
     if(rev == 2)    //纸币器钱盒装满
     {
-        Send_CMD(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL), LBYTE(USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL));     //主控->安卓，纸币器钱盒装满
+        Send_CMD(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_ZBQ_FULL), LBYTE(USARTCMD_ZHUKONG_ANDROID_ZBQ_FULL));     //主控->安卓，纸币器钱盒装满
         USART_DEBUG("ZHIBIQI : full\r\n");
     }
 
@@ -35,7 +35,7 @@ void ZhiBiQi_Init(void)
     while(!(1 == DET_POLL_ZHI()));       //指令33H,初始化必须接收到ACK
 }
 
-
+#if (flag_ZhiBiQi_USE == 1)
 //功能：纸币器单独工作
 //入口参数：
 //说明：纸币器要想检测纸币，必须循环发送指定指令。否则，机器不会检测纸币
@@ -107,12 +107,14 @@ void ZhiBiQi_USE(void)
         else
         {
             //取货，投入金额不足，主控->安卓
-            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), LBYTE(USARTCMD_ZHUKON_ANZHUO_CoinNoEnough), dat_quehuo, 2);     //主控->电机，取货
-            sprintf(strtmp, "USARTCMD_ZHUKON_ANZHUO_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKON_ANZHUO_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], price_num);
+            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_CoinNoEnough), LBYTE(USARTCMD_ZHUKONG_ANDROID_CoinNoEnough), dat_quehuo, 2);     //主控->电机，取货
+            sprintf(strtmp, "USARTCMD_ZHUKONG_ANDROID_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKONG_ANDROID_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], price_num);
             USART_DEBUG((char*)strtmp);
         }
     }
 }
+#endif
+
 
 //功能：发送复位0X30指令并校验返回值
 void DET_RESET_ZHI(void)
@@ -122,9 +124,7 @@ void DET_RESET_ZHI(void)
     while(1)
     {
         Send_RESET_ZHI();      //发送复位指令30H
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+        delay_ms(10);
 
         if(rev_data_len > 0)       //判断接受的数据长度
         {
@@ -147,9 +147,8 @@ void DET_STATUS_ZHI(void)
     while(1)
     {
         Send_STATUS_ZHI();      //发送硬币器状态指令31H
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+//        delay_ms(TIME_DELAY_ZHI);
+        delay_ms(50);
 
         if(rev_data_len >= (LEN_STATUS_ZHI + 1))       //判断接受的数据长度
 //         if(rev_data_len > 0)
@@ -166,6 +165,7 @@ void DET_STATUS_ZHI(void)
 }
 
 //功能：发送纸币器安全等级指令0x32并校验返回值
+//说明：暂时基本没用到
 void DET_SECURITY_ZHI(void)
 {
     rev_data_len = 0;   //清零，记录下一条指令回复的长度
@@ -173,9 +173,8 @@ void DET_SECURITY_ZHI(void)
     while(1)
     {
         Send_SECURITY_ZHI();            //设置纸币器安全等级指令32H
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+//        delay_ms(TIME_DELAY_ZHI);
+        delay_ms(10);
 
         if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
         {
@@ -201,9 +200,6 @@ u8 DET_POLL_ZHI(void)
     while(1)
     {
         Send_POLL_ZHI();    //回复机器动作类型0x33
-//#if(FLAG_WAIT == 1)
-//        delay_ms(TIME_DELAY_ZHI);
-//#endif
         delay_ms(50);
 
         if(Wptr_YING > 0)       //判断接受的数据长度
@@ -471,9 +467,7 @@ void DET_BILL_TYPE_ZHI(u8 mode)
                 return;
         }
 
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+        delay_ms(10);
 
         if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
         {
@@ -509,9 +503,7 @@ void DET_ESCROW_ZHI(u8 mode)
                 return;
         }
 
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+        delay_ms(10);
 
         if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
         {
@@ -537,9 +529,7 @@ u8 DET_STACKER_ZHI(u16* num_coin)
     while(1)
     {
         Send_STACKER_ZHI();         //现金盒钱数
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+        delay_ms(10);
 
         if(Wptr_YING == (LEN_STACKER_ZHI + 1))       //判断接受的数据长度
         {
@@ -580,9 +570,7 @@ void DET_IDENTIFICATION_ZHI(void)
     while(1)
     {
         Send_IDENTIFICATION_ZHI();     //发送扩展指令0x3700
-#if(FLAG_WAIT == 1)
-        delay_ms(TIME_DELAY_ZHI);
-#endif
+        delay_ms(50);
 
         if(rev_data_len == (LEN_IDENTIFICATION_ZHI + 1))       //判断接受的数据长度
         {

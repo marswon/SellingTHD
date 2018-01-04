@@ -105,13 +105,16 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 //读取主控版本
 #define USARTCMD_ANDROID_ZHUKONG_GetZhukongVer          0x014A
 //投入金额不足，主控->安卓
-#define USARTCMD_ZHUKON_ANZHUO_CoinNoEnough             0x0120
+#define USARTCMD_ZHUKONG_ANDROID_CoinNoEnough           0x0120
 //纸币器现金盒装满，主控->安卓
-#define USARTCMD_ZHUKON_ANZHUO_ZBQ_FULL                 0x0119
+#define USARTCMD_ZHUKONG_ANDROID_ZBQ_FULL               0x0119
 //单独测试货道电机，不需要纸币器和硬币器参与
 #define USARTCMD_ANDROID_ZHUKONG_HUODAO                 0x0121
 //取货后回复安卓余额
-#define USARTCMD_ZHUKON_ANZHUO_Reply_Balance            0x0122
+#define USARTCMD_ZHUKONG_ANDROID_Reply_Balance          0x0122
+//安卓查询余额指令，回复安卓上次取货后，投入的金额
+#define USARTCMD_ANDROID_ZHUKONG_GetBalance             0x0123
+
 
 //USART发送9位数据
 void USART_Send2Byte(USART_TypeDef* USARTx, uint16_t byte);

@@ -56,9 +56,9 @@
 
 
 //发送地址字节和CHK校验和
-//u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data);
+u8 Send_CMD_BASIC_coin(u16 basic_cmd, u8 *data);
 //发送扩展命令函数，包括数据区
-//u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data);
+u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data);
 
 
 //硬币器初始化
