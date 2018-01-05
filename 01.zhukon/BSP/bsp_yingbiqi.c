@@ -16,7 +16,8 @@ u8 pre_10_TUBE = 0;   //硬币器1元钱数量，上次取货后1元数量
 //上电初始化之后，5角和1元的枚数，用于计算投入的总枚数
 static u8 Init_05_YING = 0;
 static u8 Init_10_YING = 0;
-
+//手动支出标志位，用于在手动支出过程中关闭纸币器和硬币器的收钱功能
+static bool flag_shoudong = FALSE;
 char strtmp[100] = {0};     //打印调试信息缓存信息
 
 //功能：硬币器初始化
@@ -353,12 +354,30 @@ u8 DET_POLL_YING(void)
     else if((Wptr_YING >= 4) && BUF_POLL[0] == 0x02 && BUF_POLL[1] == 0x91)
     {
         REV_0B_YING = 6;        //POLL后，接到02 91 xx xx标志位,手动支出1元硬币到零钱盒
+
+        if(flag_shoudong == FALSE)
+        {
+            flag_shoudong = TRUE;       //本次手动支出中，支出第一个5角时，开始关闭收钱。硬币器不用关闭，支出中默认不会收钱的
+            //手动支出过程中，关闭取货。实际中，避免出现"原来取货余额不足，然后手动支出后，有异常情况出现，主要是无符号数赋值负数"
+            flag_take_huowu = FALSE;
+            DET_BILL_TYPE_ZHI(2);       //纸币器禁止收钱
+        }
+
         flag_huishou = 100;      //设置回收支出标志
         USART_DEBUG("YingBiQi CHU91 \r\n");
     }
     else if((Wptr_YING >= 4) && BUF_POLL[0] == 0x02 && BUF_POLL[1] == 0x90)
     {
         REV_0B_YING = 7;        //POLL后，接收到02 90 xx xx标志位,手动支出5角硬币到零钱盒
+
+        if(flag_shoudong == FALSE)
+        {
+            flag_shoudong = TRUE;       //本次手动支出中，支出第一个5角时，开始关闭收钱。硬币器不用关闭，支出中默认不会收钱的
+            //手动支出过程中，关闭取货。实际中，避免出现"原来取货余额不足，然后手动支出后，有异常情况出现，主要是无符号数赋值负数"
+            flag_take_huowu = FALSE;
+            DET_BILL_TYPE_ZHI(2);       //纸币器禁止收钱
+        }
+
         flag_huishou = 100;      //设置回收支出标志,暂时为100
         USART_DEBUG("YingBiQi CHU90 \r\n");
     }
@@ -370,6 +389,7 @@ u8 DET_POLL_YING(void)
         {
             flag_huishou--;     //保证前一次手动支出，随后支出结束
             REV_0B_YING = flag_huishou;     //自减1，返回99，下次不会执行
+            flag_shoudong = FALSE;      //手动支出结束后，标志位恢复默认
             Wptr_YING = 0;
             Wptr_mode = 0;
             return REV_0B_YING;

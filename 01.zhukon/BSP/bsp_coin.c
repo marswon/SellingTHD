@@ -77,11 +77,11 @@ void COIN_use(void)
     }
     else if(rev == 99)        //手动支出结束，需要更新硬币值
     {
+        sprintf((char*)strtmp, "REV : %d\r\n", rev);
+        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+        USART_DEBUG((char*)strtmp);
         rev = 0;
-//        sprintf((char*)strtmp, "REV : %d\r\n", rev);
-//        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-//        USART_DEBUG((char*)strtmp);
-        DET_COIN_DISENABLE_YING();      //禁止收钱
+//        DET_COIN_DISENABLE_YING();      //禁止收钱
 
         //发送0A，纪录下硬币枚数
         do
@@ -90,7 +90,8 @@ void COIN_use(void)
         }
         while(rev == 0);        //CHK校验和有误
 
-        DET_COIN_ENABLE_YING();    //发送"可收钱"指令
+        DET_COIN_ENABLE_YING();    //硬币器发送"可收钱"指令
+        DET_BILL_TYPE_ZHI(1);       //纸币器发送可收钱
     }
 
     rev = DET_POLL_ZHI();       //纸币器POLL指令，33H
@@ -140,13 +141,24 @@ void COIN_use(void)
         }
         while(rev == 0);        //CHK校验和有误
 
-        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d\r\n", num_05_TUBE, num_10_TUBE);
-        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+//        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d\r\n", num_05_TUBE, num_10_TUBE);
+//        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+//        USART_DEBUG((char*)strtmp);
+        //避免出现结果为负的情况,主要是避免先取货，余额不足，然后手动支出的时候，会出现这种
+//        if((num_05_TUBE >= pre_05_TUBE) && (num_10_TUBE >= pre_10_TUBE))
+//        {
+//            //自上次出货后投入的硬币数
+//            num_05_TUBE = (u8)(num_05_TUBE - pre_05_TUBE);
+//            num_10_TUBE = (u8)(num_10_TUBE - pre_10_TUBE);
+//            num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + num_ZHIBI * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
+//        }
         //自上次出货后投入的硬币数
         num_05_TUBE = num_05_TUBE - pre_05_TUBE;
         num_10_TUBE = num_10_TUBE - pre_10_TUBE;
         num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + num_ZHIBI * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
+        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d num_coin:%d\r\n", num_05_TUBE, num_10_TUBE, num_coin);
+        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+        USART_DEBUG((char*)strtmp);
 
         if(num_coin >= price_num)      //高于指定货物的价格
         {
@@ -188,7 +200,6 @@ void COIN_use(void)
         }
         else
         {
-//            printf("num_coin :%d num_queqian: %d\r\n", num_coin, num_queqian);
             //取货，投入金额不足，主控->安卓
             num_coin = price_num - num_coin;        //计算当前缺钱的数额
             dat_quehuo[2] = num_coin;           //发送给安卓板
