@@ -690,11 +690,11 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         {
             char str[2] = {0};
             u16 coin_num = 0;
-            coin_num = GetBalance();
-            str[0] = HBYTE(coin_num);    //余额低字节
-            str[1] = LBYTE(coin_num);    //余额高字节
+            coin_num = GetBalance();        //查询余额
+            str[0] = LBYTE(coin_num);    //余额低字节
+            str[1] = HBYTE(coin_num);    //余额高字节
             Send_CMD_DAT(USART3, HBYTE(USARTCMD_ANDROID_ZHUKONG_GetBalance), LBYTE(USARTCMD_ANDROID_ZHUKONG_GetBalance), str, 2);
-            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetBalance: %04X, %s\r\n", USARTCMD_ANDROID_ZHUKONG_GetBalance, str);
+            sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetBalance: %04X, %d\r\n", USARTCMD_ANDROID_ZHUKONG_GetBalance, coin_num);
             USART_DEBUG(strtmp);
         }
 //        else if(Data == 0x01FB) // 开启纸币器接收数据实时打印

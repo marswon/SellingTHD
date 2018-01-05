@@ -28,16 +28,16 @@ int main(void)
     TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
-    memset(ndat, 0, sizeof(ndat));
-    sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
-    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
-    YingBiQi_Init();                //硬币器初始化
-    ZhiBiQi_Init();        //纸币器流程初始化
 //    memset(ndat, 0, sizeof(ndat));
 //    sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
 //    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
 //    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
+    YingBiQi_Init();                //硬币器初始化
+    ZhiBiQi_Init();        //纸币器流程初始化
+    memset(ndat, 0, sizeof(ndat));
+    sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
+    //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
 #if SYS_ENABLE_IAP
 
     if(IAP_Read_UpdateFLAG() != 1)

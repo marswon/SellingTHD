@@ -163,8 +163,8 @@ void COIN_use(void)
             num_queqian = 0;         //清零之前缺钱的数额
             flag_take_huowu = FALSE;    //判定该次取货完成
 //            cnt = (char)balance;
-            str[0] = HBYTE(balance);    //余额低字节
-            str[1] = LBYTE(balance);    //余额高字节
+            str[0] = LBYTE(balance);    //余额低字节
+            str[1] = HBYTE(balance);    //余额高字节
 //            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), LBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), &cnt, 1);     //主控->安卓，钱数不足
             Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), LBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), str, 2);     //主控->安卓，钱数不足
             sprintf((char*)strtmp, "Balance: %d\r\n", balance);
@@ -228,7 +228,7 @@ u16 GetBalance(void)
     switch(rev)     //硬币数0A指令返回值
     {
         case 1:     //5角钱.1元钱管都未满
-            USART_DEBUG("YINGBIQI : 5,10 NO FULL");
+//            USART_DEBUG("YINGBIQI : 5,10 NO FULL");
             break;
 
         case 2:     //5角钱.1元钱管满
@@ -247,7 +247,7 @@ u16 GetBalance(void)
     //自上次出货后投入的硬币数
     num_05_TUBE -= pre_05_TUBE;
     num_10_TUBE -= pre_10_TUBE;
-    num_coin = num_05_TUBE + num_10_TUBE * 10 + balance + num_ZHIBI * 10;
+    num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + balance + num_ZHIBI * 10;       //纪录目前可用于下次取货的金额
     DET_COIN_ENABLE_YING();    //硬币器发送"可收钱"指令
     DET_BILL_TYPE_ZHI(1);       //纸币器发送可收钱
     return num_coin;
