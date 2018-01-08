@@ -43,6 +43,11 @@ int main(void)
     }
 
 #endif
+#if OFFICIAL_VERSION
+    //测试版本，输出对应版本内容
+    sprintf((char*)ndat, "FLAG_RUN: %d\r\n", FLAG_RUN);      //打印正式程序还是测试程序，实际发布不需要
+    USART_SendBytes(USART1, ndat, sizeof(ndat));
+#endif
 #if FLAG_RUN
 
     while(1)
