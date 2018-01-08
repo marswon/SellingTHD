@@ -559,7 +559,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "ZHUKON_ANZHUO_NUMb6: %04X\r\n", ZHUKON_ANZHUO_NUMb6);
             USART_DEBUG(strtmp);
         }
-        else if(Data == ANZHUO_ZHUKON_HANGLIE)  // 取"x行y列"货,发送到电机板
+        else if(Data == ANZHUO_ZHUKON_HANGLIE)  // 取"x行y列"货,发送到电机板，需要校验投入的钱数
         {
             flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
             dat_quehuo[0] = *Dat;       //取货行号
@@ -574,6 +574,15 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
                 sprintf((char*)strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1], price_num);
                 USART_DEBUG((char*)strtmp);
             }
+        }
+        else if(Data == ANZHUO_ZHUKON_QUHUO)  // 取"x行y列"货,发送到电机板，只管出货
+        {
+//            flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
+            dat_quehuo[0] = *Dat;       //取货行号
+            dat_quehuo[1] = *(Dat + 1); //取货列号
+            Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), dat_quehuo, 2);     //主控->电机，取货
+            sprintf((char*)strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1]);
+            USART_DEBUG((char*)strtmp);
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {

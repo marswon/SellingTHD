@@ -73,7 +73,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len);
 
 #define ZHUKON_ANZHUO_NUMb7   0x0139//后台显示
 
-#define ANZHUO_ZHUKON_HANGLIE 0x0111  // 取货, xx行xx列
+#define ANZHUO_ZHUKON_HANGLIE 0x0111  // 取货, xx行xx列,需要硬币器，纸币器参与，校验投入的货币
+#define ANZHUO_ZHUKON_QUHUO   0x0114  // 取货, xx行xx列,不需要硬币器，纸币器参与，适用于支付宝，微信。只管出货
 #define ZHUKON_DIANJI_HANGLIE 0x0211  // 取货, xx行xx列
 
 #define USARTCMD_ANDROID_ZHUKONG_DIANJI1VOLT            0x0115 // 升降电机+门电机电压超压
