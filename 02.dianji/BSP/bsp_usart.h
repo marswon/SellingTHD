@@ -65,7 +65,7 @@ void IAP_Write_UpdateFLAG(void);
 void IAP_Reset_UpdateFLAG(void);
 u8 IAP_Read_UpdateFLAG(void);
 
-
+void SoftwareRESET(void);
 
 #endif
 

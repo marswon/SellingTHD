@@ -150,14 +150,16 @@ u8 HUOWU_Take(u8 m, u8 n)
         if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
                 || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
         {
+            //开启掉货检测
+            Enable_duishe();
             Motor_HuoDao_Stop(m, n);    //对应货道电机停转
             break;
         }
     }
 
-    //开启掉货检测
-    Enable_duishe();
-    delay_ms(50);
+//    //开启掉货检测
+//    Enable_duishe();
+//    delay_ms(50);
 
     for(;;)
     {
@@ -165,10 +167,11 @@ u8 HUOWU_Take(u8 m, u8 n)
         {
             i++;
         }
-        else
-        {
-            i = 0;
-        }
+
+//        else
+//        {
+//            i = 0;
+//        }
 
         if(i >= 3)      //连续3次检测到货物才算检测出货成功
         {
@@ -177,7 +180,7 @@ u8 HUOWU_Take(u8 m, u8 n)
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             //PC调试
 //            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
-            sprintf(str, "Diaohuo j: %d\r\n", j);
+            sprintf(str, "Diaohuo i: %d\r\n", i);
             USART_DEBUG(str);     //打印PC调试
             break;
         }

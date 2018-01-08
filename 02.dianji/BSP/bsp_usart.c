@@ -548,7 +548,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             Send_CMD_DAT(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_GetDianjiVer), LBYTE(USARTCMD_ZHUKONG_DIANJI_GetDianjiVer), strstr, 7);
             USART_DEBUG(strstr);
         }
-        else if(Data == 0x0117) // 开启打印
+        else if(Data == 0x01FE) // 开启debug打印
         {
             if(!flag_enable_debug)
             {
@@ -557,10 +557,21 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 
             USART_DEBUG("debug\r\n");
         }
-        else if(Data == 0x0118) // 关闭打印
+        else if(Data == 0x01FD) // 关闭debug打印
         {
             flag_enable_debug = FALSE;
         }
+        else if(Data == 0x01FF) // 软件复位
+        {
+            SoftwareRESET();
+        }
     }
 }
+//功能：软件复位操作
+void SoftwareRESET(void)
+{
+    __set_FAULTMASK(1);     // 关闭所有中断
+    NVIC_SystemReset();     //软件复位，类似于按下RESET按键
+}
+
 
