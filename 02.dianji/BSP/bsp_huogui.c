@@ -147,34 +147,31 @@ u8 HUOWU_Take(u8 m, u8 n)
 
         flag_times++;
 
-        if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
-                || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
+        if(flag_times > 100)     //结束时一般大于100
         {
             //开启掉货检测
             Enable_duishe();
+        }
+
+        if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
+                || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
+        {
+            sprintf(str, "flag_times: %d\r\n", flag_times);     //一般大于100
+            USART_DEBUG(str);     //打印PC调试
+//            //开启掉货检测
+//            Enable_duishe();
             Motor_HuoDao_Stop(m, n);    //对应货道电机停转
             break;
         }
     }
-
-//    //开启掉货检测
-//    Enable_duishe();
-//    delay_ms(50);
 
     for(;;)
     {
         if(PUTThing == 1)       //检测到货物，高电平
         {
             i++;
-        }
-
-//        else
-//        {
-//            i = 0;
-//        }
-
-        if(i >= 3)      //连续3次检测到货物才算检测出货成功
-        {
+            sprintf(str, "Diaohuo i: %d\r\n", i);
+            USART_DEBUG(str);     //打印PC调试
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货成功
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
@@ -185,10 +182,20 @@ u8 HUOWU_Take(u8 m, u8 n)
             break;
         }
 
+//        if(i >= 1)      //连续3次检测到货物才算检测出货成功
+//        {
+//            Disable_duishe();       //关闭掉货检测，需要取货检测
+//            //电机->主控，出货成功
+//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+        //PC调试
+//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+//            sprintf(str, "Diaohuo i: %d\r\n", i);
+//            USART_DEBUG(str);     //打印PC调试
+//            break;
+//        }
         j++;        //检测总次数纪录，达到设定值退出
 
-//        printf("j : %d\r\n", j);
-        if(j >= 1000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
+        if(j >= 20000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货失败
@@ -198,7 +205,7 @@ u8 HUOWU_Take(u8 m, u8 n)
             return 0;
         }
 
-        delay_ms(5);   //每隔5ms检测一次
+        delay_us(50);   //每隔5ms检测一次
     }
 
 //    //取货检测
