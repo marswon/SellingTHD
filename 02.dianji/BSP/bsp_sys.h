@@ -4,11 +4,13 @@
 #include "bsp_usart.h"
 #include "bsp_delay.h"
 //#include "bsp_adc.h"
+#include "bsp_exti.h"
 #include "bsp_timer.h"
 #include "bsp_led.h"
 #include "bsp_key.h"
 #include "bsp_sys.h"
 #include "bsp_huogui.h"
+#include "bsp_gpio.h"
 #include <string.h>
 //#include <math.h>
 
@@ -20,7 +22,7 @@ typedef enum
 /*****************************************************/
 #define   Version_Year       "48"       // year
 #define   Version_Month      "01"      // month
-#define   Version_Day        "08"      // day
+#define   Version_Day        "15"      // day
 /*****************************************************/
 //UCOS编译标志位，使用UCOS需要编译对应程序，值为1；不使用UCOS不需要编译对应程序，值为0
 #define SYSTEM_SUPPORT_OS       0
@@ -71,34 +73,6 @@ typedef enum
 #define PGin(n)    BIT_ADDR(GPIOG_IDR_Addr,n)
 
 
-#define FOWD4() (DC41=0,DC40=1) // 升降电机正传
-#define REWS4() (DC41=1,DC40=0) // 升降电机反转
-#define FOWD5() (DC51=0,DC50=1) // 门电机正传
-#define REWS5() (DC51=1,DC50=0) // 门电机反转
-#define NOML4() (DC41=0,DC40=0) // 升降电机停止
-#define NOML5() (DC51=0,DC50=0) // 门电机停止
-
-// 货道电机
-// LINE2=0,ROW1=1 2行1列电机运动
-// LINE2=1,ROW1=0 2行1列电机停止
-#define ASMT1_1() (LINE1=0,ROW1=1)
-#define ASMT1_2() (LINE1=0,ROW2=1)
-#define ASMT2_1() (LINE2=0,ROW1=1)
-#define ASMT2_2() (LINE2=0,ROW2=1)
-#define ASMT3_1() (LINE3=0,ROW1=1)
-#define ASMT3_2() (LINE3=0,ROW2=1)
-#define ASMT4_1() (LINE4=0,ROW1=1)
-#define ASMT4_2() (LINE4=0,ROW2=1)
-#define ASMT5_1() (LINE5=0,ROW1=1)
-#define ASMT5_2() (LINE5=0,ROW2=1)
-#define ASMT6_1() (LINE6=0,ROW1=1)
-#define ASMT6_2() (LINE6=0,ROW2=1)
-#define ASMT7_1() (LINE7=0,ROW1=1)
-#define ASMT7_2() (LINE7=0,ROW2=1)
-#define ASMT8_1() (LINE8=0,ROW1=1)
-#define ASMT8_2() (LINE8=0,ROW2=1)
-
-
 //行反馈信号
 #define LINEFB1  GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_12)//第1行反馈, 为高电平时为反馈信号
 #define LINEFB2  GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_13)//第2行反馈, 为高电平时为反馈信号
@@ -110,18 +84,6 @@ typedef enum
 #define LINEFB8  GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_13)//第8行反馈, 为高电平时为反馈信号
 #define LINEFB9  GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_14)//第9行反馈, 为高电平时为反馈信号
 #define LINEFB10  GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_15)//第10行反馈, 为高电平时为反馈信号
-
-//层反馈信号，用于检测层数，常态下为高电平，到达某一层为低电平
-//#define LEVEL1  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_0)
-//#define LEVEL2  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_1)
-//#define LEVEL3  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_2)
-//#define LEVEL4  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_3)
-//#define LEVEL5  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_4)
-//#define LEVEL6  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_5)
-//#define LEVEL7  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_6)
-//#define LEVEL8  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_7)
-//#define LEVEL9  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_8)
-//#define LEVEL10  GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_9)
 
 
 //货道电机行驱动，常态下,LINEx=1;如果让某一行的某一列电机运动，LINEx=0

@@ -28,6 +28,9 @@ void Motor_HuoDao_Stop(u8 m, u8 n);
 u8 HUOWU_Take(u8 m, u8 n);
 //测试函数：测试每一行货道运行情况
 void HuoDao_line_test(u8 i);
+//功能：对应的货道行列电机运行一段时间
+void HuoDao_Move_Step(u8 m, u8 n);
+
 
 //行列参数校验
 void Detect_Line_And_Row(u8 line, u8 row);

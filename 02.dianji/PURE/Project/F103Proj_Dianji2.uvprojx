@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\User;..\Libraries\CMSIS;..\..\BSP;..\Libraries\FWLIB\inc</IncludePath>
+              <IncludePath>..\User;..\Libraries\CMSIS;..\Libraries\FWLIB\inc;..\..\BSP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -578,6 +578,26 @@
               <FileName>bsp_key.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\bsp_key.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\bsp_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_exti.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\BSP\bsp_exti.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\bsp_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gpio.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\BSP\bsp_gpio.h</FilePath>
             </File>
           </Files>
         </Group>

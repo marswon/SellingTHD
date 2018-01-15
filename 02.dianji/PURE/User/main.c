@@ -21,11 +21,10 @@ int main(void)
     delay_init();
     LED_Init();
     KEY_Init();
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
     GPIO_Configure();
-    uart1_init(9600);
-    uart3_init(9600);
-    uart2_init(9600);
+    NVIC_Configure();
+    USART_Configure();
+    EXTIX_Init();       //外部中断初始化
 //    TIM3_Int_Init(9, 7199); //通用定时器TIM2,1ms
     TIM3_Int_Init(999, 7199); //通用定时器TIM2,100ms
     HuoDao_Init();

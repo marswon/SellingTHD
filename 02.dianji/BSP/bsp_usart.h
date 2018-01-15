@@ -6,11 +6,21 @@
 /**********************************************/
 #define USART_BUFFER_LEN 5000
 #define SYS_ENABLE_IAP   0
+//定义配置使能
+#define USART1_CONFIG_ENABLED                (1)
+#define USART2_CONFIG_ENABLED                (1)
+#define USART3_CONFIG_ENABLED                (1)
+
+//波特率为9600，避免数据有错误
+#define USART1_BAUDRATE                       9600
+#define USART2_BAUDRATE                       9600
+#define USART3_BAUDRATE                       9600
 /**********************************************/
 #define HBYTE(a)               ((unsigned char)(((unsigned short)(a) >> 8) & 0xFF))
 #define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))
 #define MAKEWORD(bLow,bHigh)   ((unsigned short)(((unsigned char)(bLow))|(((unsigned short)((unsigned char)(bHigh)))<<8)))
 /**********************************************/
+
 #define ZHUKON_DIANJI_NUMb1   0x0211//取货x行y列
 #define DIANJI_ZHUKON_NUMb1   0x023A//出货成功
 #define DIANJI_ZHUKON_NUMb2   0x023B//出货失败

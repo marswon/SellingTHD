@@ -5,7 +5,8 @@
 #define flag_init       1
 char str[30] = {0};     //调试
 u8 flag_line = 0;               //取货中，货道电机运行，对应层的标志位
-//bool TIM3_enable_quhuo = 0;     //用于定时器3中取货检测，每隔500ms检测一次
+bool flag_PUTTHING = FALSE;         //掉货检测标志位，默认为FALSE，有货物掉落标志位为TRUE，用在EXIT中断中
+
 
 //功能：货道开机初始化
 //说明：保证货道电机运行在触发区，主要是便于存货并且保证货道电机运行时间固定。
@@ -120,16 +121,14 @@ void HuoDao_line_test(u8 i)
     }
 }
 
-/*******************************************************************************
-函数功能：弹簧道售货机驱动
-入口参数：m为行位置，n为列位置
-返回值：正常出货，取货返回1；反之返回0，没有实际作用
-说明：暂时米有取货检测
-********************************************************************************/
+//函数功能：弹簧道售货机取货
+//入口参数：m为行位置，n为列位置
+//返回值：正常出货，取货返回1；反之返回0，没有实际作用
+//说明：暂时没有取货检测，掉货检测正在测试中
 u8 HUOWU_Take(u8 m, u8 n)
 {
     u8 flag_times = 0;   //运行时间标志位，第一次运行时间必须保证越过临界区
-    u8 i = 0;
+//    u8 i = 0;
     u16 j = 0;
     Motor_HuoDao_Move(m, n);    //对应货道电机运行
 
@@ -167,32 +166,17 @@ u8 HUOWU_Take(u8 m, u8 n)
 
     for(;;)
     {
-        if(PUTThing == 1)       //检测到货物，高电平
+        if(flag_PUTTHING == TRUE)       //检测到货物，高电平
         {
-            i++;
-            sprintf(str, "Diaohuo i: %d\r\n", i);
-            USART_DEBUG(str);     //打印PC调试
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货成功
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             //PC调试
 //            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
-            sprintf(str, "Diaohuo i: %d\r\n", i);
-            USART_DEBUG(str);     //打印PC调试
+            USART_DEBUG("Diao huo\r\n");     //打印PC调试
             break;
         }
 
-//        if(i >= 1)      //连续3次检测到货物才算检测出货成功
-//        {
-//            Disable_duishe();       //关闭掉货检测，需要取货检测
-//            //电机->主控，出货成功
-//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
-        //PC调试
-//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
-//            sprintf(str, "Diaohuo i: %d\r\n", i);
-//            USART_DEBUG(str);     //打印PC调试
-//            break;
-//        }
         j++;        //检测总次数纪录，达到设定值退出
 
         if(j >= 20000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
@@ -208,41 +192,16 @@ u8 HUOWU_Take(u8 m, u8 n)
         delay_us(50);   //每隔5ms检测一次
     }
 
-//    //取货检测
-//    TIM3_enable_quhuo = 1;      //开启TIM3中取货检测
-//    for(;;)
-//    {
-//        u8 i = 0, j = 0;
-//        if(PUTThing == 0)       //检测到货物取走，低电平
-//        {
-//            i++;
-//        }
-//        else
-//        {
-//            i = 0;
-//        }
-//        if(i >= 3)      //连续3次检测到货物取走才算检测取货成功
-//        {
-//            Disable_duishe();       //关闭掉货检测
-//            //电机->主控，取货成功
-//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb4), LBYTE(DIANJI_ZHUKON_NUMb4));
-//            //PC调试
-//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb4), LBYTE(DIANJI_ZHUKON_NUMb4));
-//            break;
-//        }
-//        j++;        //检测总次数纪录，达到设定值退出
-//        if(j >= 50)         //达到50次，还没有检查到取货成功，认为取货失败
-//        {
-//            Disable_duishe();       //关闭掉货检测
-//            //电机->主控，取货失败
-//            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb3), LBYTE(DIANJI_ZHUKON_NUMb3));
-//            //PC调试
-//            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb3), LBYTE(DIANJI_ZHUKON_NUMb3));
-//            break;
-//        }
-//        delay_ms(50);   //每隔50ms检测一次
-//    }
     return 1;
+}
+
+//功能：对应的货道行列电机运行一段时间
+//说明：行列电机通电运行，用于在出货后继续运行一段时间
+void HuoDao_Move_Step(u8 m, u8 n)
+{
+    Motor_HuoDao_Move(m, n);    //对应货道电机通电
+    delay_ms(10);               //延时10ms
+    Motor_HuoDao_Stop(m, n);    //对应货道电机停转
 }
 
 //功能：货道对应行列电机运行
