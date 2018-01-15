@@ -131,6 +131,7 @@ u8 HUOWU_Take(u8 m, u8 n)
 //    u8 i = 0;
     u16 j = 0;
     Motor_HuoDao_Move(m, n);    //对应货道电机运行
+    flag_PUTTHING = FALSE;      //清零
 
     for(;;)
     {
@@ -173,6 +174,7 @@ u8 HUOWU_Take(u8 m, u8 n)
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             //PC调试
 //            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+            flag_PUTTHING = FALSE;      //清零
             USART_DEBUG("Diao huo\r\n");     //打印PC调试
             break;
         }

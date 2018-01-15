@@ -187,6 +187,7 @@ void USART1_IRQHandler(void)
         USART_ClearITPendingBit(USART1, USART_IT_RXNE); //clear flag
         USART_BufferWrite(nTemp);
         flag_test = nTemp;      //调试标记位，用于PC机调试，根据不同值执行不同动作
+        USART_SendBytess(USART1, "flag_test\r\n");
         //printf("flag_test\r\n");
     }
 

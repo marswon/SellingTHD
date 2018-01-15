@@ -1,7 +1,7 @@
 #include "bsp_sys.h"
 
 extern bool flag_PUTTHING;      //掉货检测标志位
-
+u8 cnt = 0;
 //功能：外部中断初始化程序
 void EXTIX_Init(void)
 {
@@ -55,7 +55,11 @@ void EXTIX_Init(void)
 //说明：掉货检测，常态（接收到光）检测到低电平；掉货：检测到高电平
 void EXTI9_5_IRQHandler(void)
 {
+//    cnt++;
     flag_PUTTHING = TRUE;       //有货物掉落，对应标志位置1
+//    sprintf((char*)strtemp, "PUTThing: %d\r\n", cnt);
+//    USART_SendBytes(USART1, (u8*)strtemp, sizeof(strtemp));
+    Disable_duishe();       //关闭掉货检测，需要取货检测
     USART_SendBytess(USART1, "PUTThing\r\n");       //打印调试信息
     EXTI_ClearITPendingBit(EXTI_Line9); //清除LINE9上的中断标志位
 }

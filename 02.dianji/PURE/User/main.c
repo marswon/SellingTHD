@@ -4,6 +4,7 @@
 
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern bool flag_enable_debug;
+char strtemp[100] = {0};       //打印调试信息
 
 int main(void)
 {
@@ -183,6 +184,19 @@ int main(void)
                 LED0 = 0;
                 delay_ms(2000);
             }
+        }
+        else if(flag_test == 15)
+        {
+            USART_SendBytess(USART1, "flag_test : 15\r\n");
+            flag_test = 0;
+            //开启掉货检测
+            Enable_duishe();
+            delay_ms(1000);
+            delay_ms(1000);
+            delay_ms(1000);
+            delay_ms(1000);
+            delay_ms(1000);
+            Disable_duishe();       //关闭掉货检测，需要取货检测
         }
     }
 

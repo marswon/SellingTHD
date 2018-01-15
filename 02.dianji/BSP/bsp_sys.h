@@ -115,6 +115,7 @@ typedef enum
 #define Enable_duishe()     (PEout(0) = 1)
 #define Disable_duishe()    (PEout(0) = 0)
 
+extern char strtemp[100];       //打印调试信息
 
 #endif
 
