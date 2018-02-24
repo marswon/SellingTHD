@@ -22,8 +22,8 @@ typedef enum
 #define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))
 #define MAKEWORD(bLow,bHigh)   ((unsigned short)(((unsigned char)(bLow))|(((unsigned short)((unsigned char)(bHigh)))<<8)))
 
-//硬币器，纸币器初始化，串口指令延时等待标志位
-//#define FLAG_WAIT   1
+//硬币器，纸币器使用选择位,使用纸币器和硬币器，值为1；不使用，值为0
+#define USE_COIN        0
 
 #include "bsp_usart.h"
 #include "bsp_gpio.h"
@@ -41,7 +41,7 @@ typedef enum
 #define   Version_Day        "06"      // day
 
 //正式版本为0，测试版本为1，保证实际发布不需要的部分不会编译进去
-#define   OFFICIAL_VERSION      1
+#define   OFFICIAL_VERSION      0
 
 //位带操作
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))

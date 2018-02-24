@@ -11,7 +11,7 @@
 #define ROW_DISABLE     0
 
 //行列参数最大值，最小值
-#define LINE_MAX    6
+#define LINE_MAX    10
 #define LINE_MIN    1
 #define ROW_MAX     10
 #define ROW_MIN     1

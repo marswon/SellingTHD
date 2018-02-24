@@ -28,7 +28,7 @@ typedef enum
 #define SYSTEM_SUPPORT_OS       0
 /*****************************************************/
 //正式版本为0，测试版本为1，保证实际发布不需要的部分不会编译进去
-#define   OFFICIAL_VERSION      1
+#define   OFFICIAL_VERSION      0
 
 //位带操作
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))

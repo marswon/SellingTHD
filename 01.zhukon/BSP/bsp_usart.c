@@ -17,6 +17,7 @@ u16 Wptr_mode = 0;      //硬币器发送串口指令模式位，默认为0
 u8 price_num = 0;       //货物价格
 //纸币器和硬币器某些指令，回复数据共用缓存
 u8 BUF_common[40] = {0};
+char dat_quehuo[3] = {0};     //缓存取货几行几列，用于硬币器使用
 
 bool flag_huodao_det = FALSE;       //货道电机单独测试，默认为带有硬币器和纸币器的正常出货
 bool flag_chu_fail = FALSE;        //出货失败标志位，电机->主控，默认为0
@@ -25,7 +26,7 @@ bool flag_take_huowu = FALSE;       //取货标志位，安卓->主控，取货�
 u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
-char dat_quehuo[3] = {0};     //缓存取货几行几列，用于硬币器使用
+
 
 //bool flag_COIN_print = FALSE;       //纸币器，硬币器实时打印标志位
 
@@ -559,6 +560,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "ZHUKON_ANZHUO_NUMb6: %04X\r\n", ZHUKON_ANZHUO_NUMb6);
             USART_DEBUG(strtmp);
         }
+#if USE_COIN
         else if(Data == ANZHUO_ZHUKON_HANGLIE)  // 取"x行y列"货,发送到电机板，需要校验投入的钱数
         {
             flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
@@ -575,6 +577,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
                 USART_DEBUG((char*)strtmp);
             }
         }
+#endif
         else if(Data == ANZHUO_ZHUKON_QUHUO)  // 取"x行y列"货,发送到电机板，只管出货
         {
 //            flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
@@ -592,6 +595,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetDianjiVer:%04X, %s\r\n", USARTCMD_ANDROID_ZHUKONG_GetDianjiVer, strstr);
             USART_DEBUG(strtmp);
         }
+#if USE_COIN
         else if(Data == USARTCMD_ANDROID_ZHUKONG_HUODAO) // 单独测试货道电机，不需要纸币器和硬币器参与
         {
             if(*Dat == 0xAA)
@@ -606,6 +610,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
                 USART_SendBytess(USART1, "MOTOR huodao nouse\r\n");     //提示信息
             }
         }
+#endif
     }
     else
     {
@@ -695,6 +700,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT:%04X\r\n", USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT);
             USART_DEBUG(strtmp);
         }
+#if USE_COIN
         else if(Data == USARTCMD_ANDROID_ZHUKONG_GetBalance)    //安卓查询余额指令，回复安卓上次取货后，投入的金额
         {
             char str[2] = {0};
@@ -706,6 +712,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetBalance: %04X, %d\r\n", USARTCMD_ANDROID_ZHUKONG_GetBalance, coin_num);
             USART_DEBUG(strtmp);
         }
+#endif
 //        else if(Data == 0x01FB) // 开启纸币器接收数据实时打印
 //        {
 //            flag_COIN_print = TRUE;

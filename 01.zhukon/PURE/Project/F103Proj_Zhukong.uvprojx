@@ -313,7 +313,7 @@
             <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
-            <OneElfS>0</OneElfS>
+            <OneElfS>1</OneElfS>
             <Strict>0</Strict>
             <EnumInt>0</EnumInt>
             <PlainCh>0</PlainCh>
@@ -590,14 +590,14 @@
               <FilePath>..\..\BSP\bsp_timer.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_yingbiqi.c</FileName>
+              <FileName>bsp_coin.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\BSP\bsp_yingbiqi.c</FilePath>
+              <FilePath>..\..\BSP\bsp_coin.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_yingbiqi.h</FileName>
+              <FileName>bsp_coin.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\BSP\bsp_yingbiqi.h</FilePath>
+              <FilePath>..\..\BSP\bsp_coin.h</FilePath>
             </File>
             <File>
               <FileName>bsp_zhibiqi.c</FileName>
@@ -610,14 +610,14 @@
               <FilePath>..\..\BSP\bsp_zhibiqi.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_coin.c</FileName>
+              <FileName>bsp_yingbiqi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\BSP\bsp_coin.c</FilePath>
+              <FilePath>..\..\BSP\bsp_yingbiqi.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_coin.h</FileName>
+              <FileName>bsp_yingbiqi.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\BSP\bsp_coin.h</FilePath>
+              <FilePath>..\..\BSP\bsp_yingbiqi.h</FilePath>
             </File>
           </Files>
         </Group>

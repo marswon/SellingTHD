@@ -737,8 +737,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\BSP\bsp_yingbiqi.c</PathWithFileName>
-      <FilenameWithoutPath>bsp_yingbiqi.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\BSP\bsp_coin.c</PathWithFileName>
+      <FilenameWithoutPath>bsp_coin.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -749,8 +749,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\BSP\bsp_yingbiqi.h</PathWithFileName>
-      <FilenameWithoutPath>bsp_yingbiqi.h</FilenameWithoutPath>
+      <PathWithFileName>..\..\BSP\bsp_coin.h</PathWithFileName>
+      <FilenameWithoutPath>bsp_coin.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -785,8 +785,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\BSP\bsp_coin.c</PathWithFileName>
-      <FilenameWithoutPath>bsp_coin.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\BSP\bsp_yingbiqi.c</PathWithFileName>
+      <FilenameWithoutPath>bsp_yingbiqi.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -797,8 +797,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\BSP\bsp_coin.h</PathWithFileName>
-      <FilenameWithoutPath>bsp_coin.h</FilenameWithoutPath>
+      <PathWithFileName>..\..\BSP\bsp_yingbiqi.h</PathWithFileName>
+      <FilenameWithoutPath>bsp_yingbiqi.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

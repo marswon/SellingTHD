@@ -28,8 +28,11 @@ int main(void)
     TIM3_Int_Init(999, 7199);       //通用定时器3，定时100ms
     delay_init();
     RUN_Init();
+    //使用纸币器和硬币器选择位
+#if USE_COIN
     YingBiQi_Init();        //硬币器初始化
     ZhiBiQi_Init();        //纸币器流程初始化
+#endif
     memset(ndat, 0, sizeof(ndat));
     sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
     //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
@@ -96,7 +99,7 @@ int main(void)
                 USART_SendByte(UART4, data);
             }
         }
-
+#if USE_COIN
         if(flag_huodao_det == FALSE)        //默认是带有纸币器和硬币器的正常取货流程
         {
 //            YingBiQi_USE();         //硬币器使用
@@ -104,6 +107,7 @@ int main(void)
             COIN_use();         //纸币器和硬币器联合使用
 //            delay_ms(100);
         }
+#endif
     }
 
 #else
