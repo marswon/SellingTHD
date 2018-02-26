@@ -150,7 +150,7 @@ u8 HUOWU_Take(u8 m, u8 n)
         if(flag_times > 100)     //结束时一般大于100
         {
             //开启掉货检测
-            Enable_duishe();
+//            Enable_duishe();      //目前有异响，关闭掉货检测
         }
 
         if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
