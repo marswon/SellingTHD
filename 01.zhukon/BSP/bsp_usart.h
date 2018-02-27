@@ -8,8 +8,6 @@
 #define USART_BUFFER_LEN 5000
 #define SYS_ENABLE_IAP   0
 
-//串口2，纸币器回复消息缓存
-#define USART2_BUF_LEN 2000
 /***************************************************/
 //定义配置使能
 #define USART1_CONFIG_ENABLED                (1)
@@ -37,8 +35,6 @@ extern u8 BUF_POLL[20];       //纸币器和硬币器POLL指令，回复数据�
 extern u8 Wptr_YING;        //硬币器写指针
 extern u16 Wptr_mode;      //硬币器发送串口指令模式位，默认为0
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
-//extern u8 USART2_COIN_BUF[USART2_BUF_LEN];      //串口2纸币器接收缓冲区
-
 
 /***************************************************/
 #define UPDATE_FLAG_FLASH_ADDR             0x800BB80    //写入升级标志地址
@@ -126,9 +122,6 @@ void USART_SendBytess(USART_TypeDef* USARTx, char *str);
 void USART_DEBUG(char *str);
 
 //串口2接收和发送
-void USART2_COIN_BufWrite(u8 ntemp);
-//u8 USART2_COIN_BufRead(u8 *data);
-//void USART2_COIN_BufCopy(u8 *str, u8 str_len);
 void BufWrite_COIN(u8 ntemp);
 
 

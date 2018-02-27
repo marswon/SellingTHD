@@ -14,7 +14,6 @@ void ZhiBiQi_Init(void)
 {
     u8 rev = 0;
     DET_RESET_ZHI();        //复位RESET
-//    while(!(5 == DET_POLL_ZHI()));       //指令33H,初始化必须接收到ACK
     DET_STATUS_ZHI();       //纸币器参数31H
     DET_IDENTIFICATION_ZHI();       //指令3700H，返回厂家信息
 
@@ -147,7 +146,6 @@ void DET_STATUS_ZHI(void)
     while(1)
     {
         Send_STATUS_ZHI();      //发送硬币器状态指令31H
-//        delay_ms(TIME_DELAY_ZHI);
         delay_ms(50);
 
         if(rev_data_len >= (LEN_STATUS_ZHI + 1))       //判断接受的数据长度
@@ -173,7 +171,6 @@ void DET_SECURITY_ZHI(void)
     while(1)
     {
         Send_SECURITY_ZHI();            //设置纸币器安全等级指令32H
-//        delay_ms(TIME_DELAY_ZHI);
         delay_ms(10);
 
         if(rev_data_len > 0)       //判断接受的数据长度,接收到ACK
@@ -318,28 +315,6 @@ u8 DET_POLL_ZHI(void)
 //        flag_huishou = 100;      //设置回收支出标志,暂时为100
         USART_DEBUG("ZhiBiQi INIT \r\n");
     }
-//    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x80 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x89)
-//    {
-//        REV_33_YING = 9;        //POLL后，接收到80 09 89标志位,收入1元纸币到钱盒
-//        USART_DEBUG("ZhiBiQi RU1 \r\n");
-//    }
-//    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x81 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8A)
-//    {
-//        REV_33_YING = 10;        //POLL后，接收到81 09 8A标志位,收入5元纸币到钱盒
-//        USART_DEBUG("ZhiBiQi RU5 \r\n");
-//    }
-//    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x82 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8B)
-//    {
-//        REV_33_YING = 11;        //POLL后，接到82 09 8B标志位,收入10元纸币到钱盒
-////        flag_huishou = 100;      //设置回收支出标志
-//        USART_DEBUG("ZhiBiQi RU10 \r\n");
-//    }
-//    else if((Wptr_YING == 3) && BUF_POLL[0] == 0x83 && BUF_POLL[1] == 0x09 && BUF_POLL[2] == 0x8C)
-//    {
-//        REV_33_YING = 12;        //POLL后，接到83 09 8C标志位,收入20元纸币到钱盒
-////        flag_huishou = 100;      //设置回收支出标志,暂时为100
-//        USART_DEBUG("ZhiBiQi RU20 \r\n");
-//    }
     else
     {
         REV_33_YING = 0xFF;        //POLL后，接收到未定义的数据

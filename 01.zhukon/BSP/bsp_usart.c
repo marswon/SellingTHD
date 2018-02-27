@@ -4,10 +4,6 @@
 u8 UsartBuffer[USART_BUFFER_LEN] = {0}; //数据缓冲区
 u16 UsartWptr = 0;
 u16 UsartRptr = 0;
-//串口2对应纸币器和硬币器，缓存纸币器回复的信息
-//u8 USART2_COIN_BUF[USART2_BUF_LEN] = {0};
-//u16 Usart2Wptr = 0;
-//u16 Usart2Rptr = 0;
 //纸币器和硬币器POLL指令，回复数据专用缓存
 u8 BUF_POLL[20] = {0};
 //硬币器TUBE STATUS指令，回复数据专用缓存
@@ -127,11 +123,9 @@ void USART2_IRQHandler(void)
         nTemp = USART_ReceiveData(USART2);
         USART_ClearITPendingBit(USART2, USART_IT_RXNE); //clear flag
         /************************************************/
-//        USART_BufferWrite(nTemp);
         rev_data_len++;     //硬币器回复数据计数
-//        USART2_COIN_BufWrite(nTemp);
         BufWrite_COIN(nTemp);         //纸币器，硬币器回复数据专用缓存
-//        USART_SendByte(USART1, nTemp);      //硬币器和纸币器回复的信息，串口实时打印到PC
+//        USART_SendByte(USART1, nTemp);
 //        if(flag_COIN_print == TRUE)        //根据指令开关纸币器回复实时打印
 //        {
 //            USART_SendByte(USART1, nTemp);
@@ -450,32 +444,6 @@ void USART_BufferWrite(u8 ntemp)
     UsartWptr = (UsartWptr + 1) % USART_BUFFER_LEN;
 }
 
-//功能：缓存串口2接收到的纸币器回复的信息
-//说明：纸币器收到命令后，会回复信息给我们，我们需要一个单独的BUF来接收。
-//void USART2_COIN_BufWrite(u8 ntemp)
-//{
-//    if((Usart2Wptr + 1) % USART2_BUF_LEN == Usart2Rptr) // full
-//    {
-//        return;
-//    }
-
-//    USART2_COIN_BUF[Usart2Wptr] = ntemp;
-//    Usart2Wptr = (Usart2Wptr + 1) % USART2_BUF_LEN;
-//}
-
-//功能：读取串口2接收到的纸币器回复的信息
-//u8 USART2_COIN_BufRead(u8 *data)
-//{
-//    if(Usart2Rptr == Usart2Wptr) // empty
-//    {
-//        return 0;
-//    }
-
-//    *data = USART2_COIN_BUF[Usart2Rptr];
-//    Usart2Rptr = (Usart2Rptr + 1) % USART2_BUF_LEN; //保证读位置值不溢出
-//    return 1;
-//}
-
 //功能：缓存串口2接收到的硬币器回复的信息
 //说明：硬币器收到命令后，会回复信息给我们，我们每条指令用一个单独的BUF来接收。
 //发送串口指令时，我们会指定mode位
@@ -512,38 +480,6 @@ void BufWrite_COIN(u8 ntemp)
     }
 }
 
-
-//功能：复制串口2接收到的纸币器回复的信息到一个指定的位置
-//入口参数：str为接收的数组，str_len为接收数组长度
-//说明：先读取纸币器回复信息的缓存，然后写入到指定的位置
-//void USART2_COIN_BufCopy(u8 *str, u8 str_len)
-//{
-//    u8 i;
-//    u8 data = 0;
-
-//    for(i = 0; i < str_len; i++)
-//    {
-//        USART2_COIN_BufRead(&data);     //读取串口2接收的数据
-//        str[i] = data;
-//        data = 0;       //实际中，读取越界后，CHK校验和会一直出现在后续中。
-//    }
-//}
-
-//功能：复制串口2接收到的纸币器回复的信息到一个指定的位置
-//入口参数：str为接收的数组，str_len为接收数组长度
-//说明：不通过USART2_COIN_BufRead()函数接收数据，因为可能一直没有读。
-//实际中，有问题，写指针Wptr到结尾会自动归零
-//void USART2_COIN_BufCopy(u8 *str, u8 str_len)
-//{
-//    u8 i;
-//    u16 Wptr = (Usart2Wptr - str_len);       //回到接收数据起点
-
-//    for(i = 0; i < str_len; i++)
-//    {
-//        str[i] = USART2_COIN_BUF[Wptr + i];     //纪录串口2接收的数据
-//    }
-//}
-
 //功能：串口协议命令处理
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {
@@ -560,6 +496,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "ZHUKON_ANZHUO_NUMb6: %04X\r\n", ZHUKON_ANZHUO_NUMb6);
             USART_DEBUG(strtmp);
         }
+
 #if USE_COIN
         else if(Data == ANZHUO_ZHUKON_HANGLIE)  // 取"x行y列"货,发送到电机板，需要校验投入的钱数
         {
@@ -577,6 +514,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
                 USART_DEBUG((char*)strtmp);
             }
         }
+
 #endif
         else if(Data == ANZHUO_ZHUKON_QUHUO)  // 取"x行y列"货,发送到电机板，只管出货
         {
@@ -595,6 +533,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetDianjiVer:%04X, %s\r\n", USARTCMD_ANDROID_ZHUKONG_GetDianjiVer, strstr);
             USART_DEBUG(strtmp);
         }
+
 #if USE_COIN
         else if(Data == USARTCMD_ANDROID_ZHUKONG_HUODAO) // 单独测试货道电机，不需要纸币器和硬币器参与
         {
@@ -610,6 +549,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
                 USART_SendBytess(USART1, "MOTOR huodao nouse\r\n");     //提示信息
             }
         }
+
 #endif
     }
     else
@@ -700,6 +640,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT:%04X\r\n", USARTCMD_ANDROID_ZHUKONG_DIANJI2VOLT);
             USART_DEBUG(strtmp);
         }
+
 #if USE_COIN
         else if(Data == USARTCMD_ANDROID_ZHUKONG_GetBalance)    //安卓查询余额指令，回复安卓上次取货后，投入的金额
         {
@@ -712,16 +653,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtmp, "USARTCMD_ANDROID_ZHUKONG_GetBalance: %04X, %d\r\n", USARTCMD_ANDROID_ZHUKONG_GetBalance, coin_num);
             USART_DEBUG(strtmp);
         }
+
 #endif
-//        else if(Data == 0x01FB) // 开启纸币器接收数据实时打印
-//        {
-//            flag_COIN_print = TRUE;
-//            USART_SendBytess(USART1, "COIN print\r\n");     //提示信息
-//        }
-//        else if(Data == 0x01FC) // 关闭纸币器接收数据实时打印
-//        {
-//            flag_COIN_print = FALSE;
-//        }
         else if(Data == 0x01FE) // 开启debug打印
         {
             if(!flag_enable_debug)

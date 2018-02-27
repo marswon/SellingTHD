@@ -69,7 +69,7 @@ void NVIC_Configure(void)
     NVIC_Init(&NVIC_InitStructure);                         //根据指定的参数初始化VIC寄存器
 #endif
 #if UART4_CONFIG_ENABLED > 0
-    /* 使能串口3中断 */
+    /* 使能串口4中断 */
     NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0 ; //抢占优先级0
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;      //子优先级4
@@ -77,7 +77,7 @@ void NVIC_Configure(void)
     NVIC_Init(&NVIC_InitStructure);                         //根据指定的参数初始化VIC寄存器
 #endif
 #if UART5_CONFIG_ENABLED > 0
-    /* 使能串口3中断 */
+    /* 使能串口5中断 */
     NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0 ; //抢占优先级0
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 5;      //子优先级5

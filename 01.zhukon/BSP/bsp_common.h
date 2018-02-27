@@ -37,8 +37,8 @@ typedef enum
 #include "bsp_coin.h"
 
 #define   Version_Year       "28"       // year
-#define   Version_Month      "01"      // month
-#define   Version_Day        "06"      // day
+#define   Version_Month      "02"      // month
+#define   Version_Day        "27"      // day
 
 //正式版本为0，测试版本为1，保证实际发布不需要的部分不会编译进去
 #define   OFFICIAL_VERSION      0

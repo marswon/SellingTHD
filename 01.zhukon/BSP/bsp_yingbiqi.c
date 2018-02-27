@@ -8,11 +8,8 @@ u8 USART2_dat[50] = {0};
 u8 rev_data_len = 0;        //串口2回复数据长度，用于没有收到数据继续发送
 
 /********************* 硬币器 ********************/
-//u16 tmp_TUBE_YING = 0;      //硬币器钱管满状态缓存
 u8 pre_05_TUBE = 0;   //硬币器5角钱数量，上次取货后5角数量
 u8 pre_10_TUBE = 0;   //硬币器1元钱数量，上次取货后1元数量
-//u8 CNT_05_YING = 0;     //投入5角的总数
-//u8 CNT_10_YING = 0;    //投入1元的总数
 //上电初始化之后，5角和1元的枚数，用于计算投入的总枚数
 static u8 Init_05_YING = 0;
 static u8 Init_10_YING = 0;
@@ -60,6 +57,7 @@ void YingBiQi_USE(void)
 {
     u16 num_coin = 0;   //投入钱币的总金额
     static u8 balance = 0;  //投入货币取货后投入的余额
+    static u16 man_coin = 0;    //A管一元和D管5角存入已满，投入的钱币掉入现金盒
     u8 num_05_TUBE = 0;
     u8 num_10_TUBE = 0;
     u8 rev = 0;
@@ -80,7 +78,7 @@ void YingBiQi_USE(void)
         switch(rev)     //硬币数0A指令返回值
         {
             case 1:     //5角钱.1元钱管都未满
-                USART_DEBUG("YINGBIQI : 5,10 NO FULL");
+                USART_DEBUG("YINGBIQI : 5,10 NO FULL\r\n");
                 break;
 
             case 2:     //5角钱.1元钱管满
@@ -96,11 +94,14 @@ void YingBiQi_USE(void)
                 break;
         }
 
+        sprintf((char*)strtmp, "num_05:%d num_10:%d man_coin:%d pre_05:%d pre_10:%d\r\n", num_05_TUBE, num_10_TUBE, man_coin, pre_05_TUBE, pre_10_TUBE);
+        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+        USART_DEBUG((char*)strtmp);
         //自上次出货后投入的硬币数
         num_05_TUBE -= pre_05_TUBE;
         num_10_TUBE -= pre_10_TUBE;
 //        USART_SendByte(USART1, rev);
-        num_PAY = num_05_TUBE + num_10_TUBE * 2 + balance / 5;      //连同余额和新投入的硬币一起支出
+        num_PAY = num_05_TUBE + num_10_TUBE * 2 + balance / 5 + man_coin / 5;      //连同余额和新投入的硬币一起支出
 
         if(num_PAY > 0)     //只有支出的金额大于0，才会支出
         {
@@ -117,6 +118,7 @@ void YingBiQi_USE(void)
 
         DET_COIN_ENABLE_YING();    //发送"可收钱"指令
         balance = 0;        //余额清零
+        man_coin = 0;       //掉入现金盒的钱数清零
         flag_take_huowu = FALSE;    //先选货，投入硬币后，动作保留杆表示该次出货取消
     }
     else if(rev == 99)        //手动支出结束，需要更新硬币值
@@ -136,6 +138,20 @@ void YingBiQi_USE(void)
 
         DET_COIN_ENABLE_YING();    //发送"可收钱"指令
     }
+    else if(rev == 8)        //A管接收1元已满
+    {
+        man_coin += 10;     //纪录投入一元数量
+        sprintf((char*)strtmp, "man_coin: %d\r\n", man_coin);
+        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+        USART_DEBUG((char*)strtmp);
+    }
+    else if(rev == 9)        //A管接收5角已满
+    {
+        man_coin += 5;     //纪录投入5角数量
+        sprintf((char*)strtmp, "man_coin : %d\r\n", man_coin);
+        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
+        USART_DEBUG((char*)strtmp);
+    }
 
     if(flag_take_huowu == TRUE)        //安卓->主控，发送"取货"命令
     {
@@ -145,13 +161,13 @@ void YingBiQi_USE(void)
         }
         while(rev == 0);        //CHK校验和有误
 
-        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d\r\n", num_05_TUBE, num_10_TUBE);
+        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d man_coin:%d\r\n", num_05_TUBE, num_10_TUBE, man_coin);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
         USART_DEBUG((char*)strtmp);
         //自上次出货后投入的硬币数
         num_05_TUBE = num_05_TUBE - pre_05_TUBE;
         num_10_TUBE = num_10_TUBE - pre_10_TUBE;
-        num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
+        num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + balance + man_coin;      //当次投入的钱币的总额 + 之前的余额
 
         if(num_coin >= price_num)      //高于指定货物的价格
         {
@@ -160,6 +176,7 @@ void YingBiQi_USE(void)
             sprintf((char*)strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1], price_num);
             USART_DEBUG((char*)strtmp);
             balance = num_coin - price_num;     //更新余额
+            man_coin = 0;       //掉入现金盒的钱数清零
             flag_take_huowu = FALSE;    //判定该次取货完成
             delay_ms(1000);         //延时1s
 
@@ -185,14 +202,6 @@ void YingBiQi_USE(void)
             USART_DEBUG((char*)strtmp);
         }
     }
-
-//    if(flag_chu_success == TRUE)       //出货成功，暂时用不到
-//    {
-//        DET_PAYOUT_YING(num_PAY);            //支出指定金额硬币
-//        DET_PAYOUT_VALUE_POLL_YING();   //支出完成，回复ACK结束
-//        DET_COIN_ENABLE_YING();    //发送"可收钱"指令
-//        flag_chu_success = FALSE;
-//    }
 }
 #endif
 
@@ -397,6 +406,16 @@ u8 DET_POLL_YING(void)
 
         //POLL后接收到00指令，代表硬币器复位
         USART_DEBUG("YingBiQi ACK \r\n");
+    }
+    else if((Wptr_YING >= 3) && BUF_POLL[0] == 0x41 && BUF_POLL[1] == 0x38 && BUF_POLL[2] == 0x79)
+    {
+        REV_0B_YING = 8;        //POLL后，接收到41 38 79，表示A管1元接收已满
+        USART_DEBUG("YingBiQi A full \r\n");
+    }
+    else if((Wptr_YING >= 3) && BUF_POLL[0] == 0x40 && BUF_POLL[1] == 0x4A && BUF_POLL[2] == 0x8A)
+    {
+        REV_0B_YING = 9;        //POLL后，接收到40 4A 8A，表示D管5角接收已满
+        USART_DEBUG("YingBiQi D full \r\n");
     }
     else
     {

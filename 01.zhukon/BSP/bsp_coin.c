@@ -141,17 +141,6 @@ void COIN_use(void)
         }
         while(rev == 0);        //CHK校验和有误
 
-//        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d\r\n", num_05_TUBE, num_10_TUBE);
-//        //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-//        USART_DEBUG((char*)strtmp);
-        //避免出现结果为负的情况,主要是避免先取货，余额不足，然后手动支出的时候，会出现这种
-//        if((num_05_TUBE >= pre_05_TUBE) && (num_10_TUBE >= pre_10_TUBE))
-//        {
-//            //自上次出货后投入的硬币数
-//            num_05_TUBE = (u8)(num_05_TUBE - pre_05_TUBE);
-//            num_10_TUBE = (u8)(num_10_TUBE - pre_10_TUBE);
-//            num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + num_ZHIBI * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
-//        }
         //自上次出货后投入的硬币数
         num_05_TUBE = num_05_TUBE - pre_05_TUBE;
         num_10_TUBE = num_10_TUBE - pre_10_TUBE;
@@ -174,10 +163,8 @@ void COIN_use(void)
             num_ZHIBI = 0;       //清零
             num_queqian = 0;         //清零之前缺钱的数额
             flag_take_huowu = FALSE;    //判定该次取货完成
-//            cnt = (char)balance;
             str[0] = LBYTE(balance);    //余额低字节
             str[1] = HBYTE(balance);    //余额高字节
-//            Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), LBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), &cnt, 1);     //主控->安卓，钱数不足
             Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), LBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), str, 2);     //主控->安卓，钱数不足
             sprintf((char*)strtmp, "Balance: %d\r\n", balance);
             USART_DEBUG((char*)strtmp);
