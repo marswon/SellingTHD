@@ -135,7 +135,9 @@ int main(void)
         }
         else if(flag_test == 6)
         {
+            extern bool Enable_EXTI;       //使能掉货检测外部中断
             flag_test = 0;
+            Enable_EXTI = TRUE;     //开启外部检测
             //开启掉货检测
             Enable_duishe();
         }

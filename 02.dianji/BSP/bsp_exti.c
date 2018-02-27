@@ -51,16 +51,22 @@ void EXTIX_Init(void)
 //    NVIC_Init(&NVIC_InitStructure);       //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
 }
 
+extern bool Enable_EXTI;       //使能掉货检测外部中断
+
 //功能：外部中断9服务程序
 //说明：掉货检测，常态（接收到光）检测到低电平；掉货：检测到高电平
 void EXTI9_5_IRQHandler(void)
 {
 //    cnt++;
-    flag_PUTTHING = TRUE;       //有货物掉落，对应标志位置1
-//    sprintf((char*)strtemp, "PUTThing: %d\r\n", cnt);
-//    USART_SendBytes(USART1, (u8*)strtemp, sizeof(strtemp));
-//    Disable_duishe();       //关闭掉货检测，需要取货检测
-    USART_SendBytess(USART1, "PUTThing\r\n");       //打印调试信息
+    if(Enable_EXTI == TRUE)
+    {
+        flag_PUTTHING = TRUE;       //有货物掉落，对应标志位置1
+//        sprintf((char*)strtemp, "PUTThing: %d\r\n", cnt);
+//        USART_SendBytes(USART1, (u8*)strtemp, sizeof(strtemp));
+//        Disable_duishe();       //关闭掉货检测，需要取货检测
+        USART_SendBytess(USART1, "PUTThing\r\n");       //打印调试信息
+    }
+
     EXTI_ClearITPendingBit(EXTI_Line9); //清除LINE9上的中断标志位
 }
 
