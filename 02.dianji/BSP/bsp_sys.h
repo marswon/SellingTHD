@@ -21,8 +21,8 @@ typedef enum
 
 /*****************************************************/
 #define   Version_Year       "48"       // year
-#define   Version_Month      "01"      // month
-#define   Version_Day        "15"      // day
+#define   Version_Month      "02"      // month
+#define   Version_Day        "27"      // day
 /*****************************************************/
 //UCOS编译标志位，使用UCOS需要编译对应程序，值为1；不使用UCOS不需要编译对应程序，值为0
 #define SYSTEM_SUPPORT_OS       0

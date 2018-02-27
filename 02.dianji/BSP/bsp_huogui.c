@@ -6,7 +6,7 @@
 char str[30] = {0};     //调试
 u8 flag_line = 0;               //取货中，货道电机运行，对应层的标志位
 bool flag_PUTTHING = FALSE;         //掉货检测标志位，默认为FALSE，有货物掉落标志位为TRUE，用在EXIT中断中
-
+bool Enable_EXTI = FALSE;       //使能掉货检测外部中断
 
 //功能：货道开机初始化
 //说明：保证货道电机运行在触发区，主要是便于存货并且保证货道电机运行时间固定。
@@ -150,7 +150,11 @@ u8 HUOWU_Take(u8 m, u8 n)
         if(flag_times == 100)     //结束时一般大于100
         {
             //开启掉货检测
-//            Enable_duishe();      //目前有异响，关闭掉货检测
+            Enable_duishe();      //目前有异响，关闭掉货检测
+        }
+        else if(flag_times == 110)
+        {
+            Enable_EXTI = TRUE;     //开启外部检测
         }
 
         if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
@@ -175,23 +179,25 @@ u8 HUOWU_Take(u8 m, u8 n)
             //PC调试
 //            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             flag_PUTTHING = FALSE;      //清零
+            Enable_EXTI = FALSE;     //关闭外部检测
             USART_DEBUG("Diao huo\r\n");     //打印PC调试
             break;
         }
 
         j++;        //检测总次数纪录，达到设定值退出
 
-        if(j >= 20000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
+        if(j >= 1000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货失败
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+            Enable_EXTI = FALSE;     //关闭外部检测
             //PC调试
 //            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
             return 0;
         }
 
-        delay_us(50);   //每隔5ms检测一次
+        delay_ms(5);   //每隔5ms检测一次
     }
 
     return 1;

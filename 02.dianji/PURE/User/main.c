@@ -1,6 +1,6 @@
 #include "bsp_sys.h"
 //测试和正式运行程序标志位，值为1为正式运行程序，值为0为测试的程序
-#define FLAG_RUN    1
+#define FLAG_RUN    0
 
 extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 extern bool flag_enable_debug;
@@ -135,7 +135,9 @@ int main(void)
         }
         else if(flag_test == 6)
         {
+            extern bool Enable_EXTI;       //使能掉货检测外部中断
             flag_test = 0;
+            Enable_EXTI = TRUE;     //开启外部检测
             //开启掉货检测
             Enable_duishe();
         }
