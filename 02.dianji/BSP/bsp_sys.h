@@ -21,14 +21,15 @@ typedef enum
 
 /*****************************************************/
 #define   Version_Year       "48"       // year
-#define   Version_Month      "02"      // month
-#define   Version_Day        "27"      // day
+#define   Version_Month      "03"      // month
+#define   Version_Day        "07"      // day
+
 /*****************************************************/
 //UCOS编译标志位，使用UCOS需要编译对应程序，值为1；不使用UCOS不需要编译对应程序，值为0
 #define SYSTEM_SUPPORT_OS       0
 /*****************************************************/
 //正式版本为0，测试版本为1，保证实际发布不需要的部分不会编译进去
-#define   OFFICIAL_VERSION      0
+#define   OFFICIAL_VERSION      1
 
 //位带操作
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))

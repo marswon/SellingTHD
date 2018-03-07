@@ -130,7 +130,8 @@ int main(void)
         else if(flag_test == 2)     //发送0x08
         {
             flag_test = 0;
-            DET_RESET_YING();      //发送复位指令
+            
+//            DET_RESET_YING();      //发送复位指令
         }
         else if(flag_test == 3)     //发送0x09
         {
@@ -288,7 +289,7 @@ int main(void)
 
             while(1)
             {
-                YingBiQi_USE();         //硬币器使用
+//                YingBiQi_USE();         //硬币器使用
                 delay_ms(1000);
                 delay_ms(1000);
             }
@@ -355,7 +356,7 @@ int main(void)
 
             while(1)
             {
-                ZhiBiQi_USE();          //纸币器使用
+//                ZhiBiQi_USE();          //纸币器使用
                 delay_ms(1000);
 //                delay_ms(1000);
             }
