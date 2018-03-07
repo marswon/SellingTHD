@@ -127,7 +127,7 @@ void HuoDao_line_test(u8 i)
 //说明：暂时没有取货检测，掉货检测正在测试中
 u8 HUOWU_Take(u8 m, u8 n)
 {
-    u8 flag_times = 0;   //运行时间标志位，第一次运行时间必须保证越过临界区
+    u16 flag_times = 0;   //运行时间标志位，第一次运行时间必须保证越过临界区
 //    u8 i = 0;
     u16 j = 0;
     Motor_HuoDao_Move(m, n);    //对应货道电机运行
@@ -137,7 +137,7 @@ u8 HUOWU_Take(u8 m, u8 n)
     {
         if(flag_times == 0)
         {
-            delay_ms(500);      //延时时间长，保证动作越过临界区
+            delay_ms(600);      //延时时间长，保证动作越过临界区
             USART_DEBUG("TIMES take\r\n");
         }
         else
@@ -164,6 +164,7 @@ u8 HUOWU_Take(u8 m, u8 n)
             USART_DEBUG(str);     //打印PC调试
 //            //开启掉货检测
 //            Enable_duishe();
+            delay_ms(10);
             Motor_HuoDao_Stop(m, n);    //对应货道电机停转
             break;
         }
