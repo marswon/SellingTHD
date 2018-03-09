@@ -53,11 +53,6 @@ extern u8 flag_start_flash;         //远程升级标志位，升级过程中为
 //extern u8 flag_test;                //调试标记位，用于PC机调试，根据不同值执行不同动作
 /**********************************************/
 unsigned short CRC16_isr(unsigned char *Dat, unsigned int len);
-void uart1_init(u32 bound);
-void uart2_init(u32 bound);
-void uart3_init(u32 bound);
-void uart4_init(u32 bound);
-void uart5_init(u32 bound);
 void GPIO_Configure(void);
 void USART_SendByte(USART_TypeDef* USARTx, uint8_t byte);
 void USART_SendBytes(USART_TypeDef* USARTx, uint8_t *str, uint8_t len);

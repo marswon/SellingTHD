@@ -1,3 +1,8 @@
+/************************************************************************************************
+NO_Diaohuo_main.c:没有掉货检测版本，货道直接出货，不检测出货情况。外部中断初始化也不需要
+*************************************************************************************************/
+
+
 #include "bsp_sys.h"
 
 extern bool flag_enable_debug;
@@ -22,7 +27,7 @@ int main(void)
     GPIO_Configure();
     NVIC_Configure();
     USART_Configure();
-    EXTIX_Init();       //外部中断初始化
+//    EXTIX_Init();       //外部中断初始化
 //    TIM3_Int_Init(9, 7199); //通用定时器TIM2,1ms
     TIM3_Int_Init(999, 7199); //通用定时器TIM2,100ms
     HuoDao_Init();
