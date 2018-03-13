@@ -1,6 +1,6 @@
 #include "bsp_coin.h"
 
-extern char strtmp[100];     //打印调试信息缓存信息
+
 static u8 num_ZHIBI = 0;     //纪录投入纸币的金额
 static u16 balance = 0;  //投入货币取货后投入的余额
 
@@ -77,9 +77,9 @@ void COIN_use(void)
     }
     else if(rev == 99)        //手动支出结束，需要更新硬币值
     {
-        sprintf((char*)strtmp, "REV : %d\r\n", rev);
+        sprintf((char*)strtemp, "REV : %d\r\n", rev);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
         rev = 0;
 //        DET_COIN_DISENABLE_YING();      //禁止收钱
 
@@ -130,8 +130,8 @@ void COIN_use(void)
             break;
     }
 
-//    sprintf((char*)strtmp, "num_ZHIBI : %d\r\n", num_ZHIBI);    //打印投入金额
-//    USART_DEBUG((char*)strtmp);
+//    sprintf((char*)strtemp, "num_ZHIBI : %d\r\n", num_ZHIBI);    //打印投入金额
+//    USART_DEBUG((char*)strtemp);
 
     if(flag_take_huowu == TRUE)        //安卓->主控，发送"取货"命令
     {
@@ -145,20 +145,20 @@ void COIN_use(void)
         num_05_TUBE = num_05_TUBE - pre_05_TUBE;
         num_10_TUBE = num_10_TUBE - pre_10_TUBE;
         num_coin = num_05_TUBE * 5 + num_10_TUBE * 10 + num_ZHIBI * 10 + balance;      //当次投入的钱币的总额 + 之前的余额
-        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d num_coin:%d\r\n", num_05_TUBE, num_10_TUBE, num_coin);
+        sprintf((char*)strtemp, "num_05_TUBE:%d num_10_TUBE:%d num_coin:%d\r\n", num_05_TUBE, num_10_TUBE, num_coin);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
 
         if(num_coin >= price_num)      //高于指定货物的价格
         {
             char str[2] = {0};      //用于返回取货后的余额
-//            sprintf(strtmp, "num_coin: %d price_num: %d\r\n", num_coin, price_num);
-//            USART_DEBUG((char*)strtmp);
+//            sprintf(strtemp, "num_coin: %d price_num: %d\r\n", num_coin, price_num);
+//            USART_DEBUG((char*)strtemp);
             DET_COIN_DISENABLE_YING();      //硬币器禁止收钱
             DET_BILL_TYPE_ZHI(2);       //纸币器禁止收钱
             Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), dat_quehuo, 2);     //主控->电机，取货
-            sprintf((char*)strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1], price_num);
-            USART_DEBUG((char*)strtmp);
+            sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1], price_num);
+            USART_DEBUG((char*)strtemp);
             balance = num_coin - price_num;     //更新余额
             num_ZHIBI = 0;       //清零
             num_queqian = 0;         //清零之前缺钱的数额
@@ -166,8 +166,8 @@ void COIN_use(void)
             str[0] = LBYTE(balance);    //余额低字节
             str[1] = HBYTE(balance);    //余额高字节
             Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), LBYTE(USARTCMD_ZHUKONG_ANDROID_Reply_Balance), str, 2);     //主控->安卓，钱数不足
-            sprintf((char*)strtmp, "Balance: %d\r\n", balance);
-            USART_DEBUG((char*)strtmp);
+            sprintf((char*)strtemp, "Balance: %d\r\n", balance);
+            USART_DEBUG((char*)strtemp);
             delay_ms(1000);         //延时1s
 
             //目前，投入硬币，选货后立即会找零
@@ -190,14 +190,14 @@ void COIN_use(void)
             //取货，投入金额不足，主控->安卓
             num_coin = price_num - num_coin;        //计算当前缺钱的数额
             dat_quehuo[2] = num_coin;           //发送给安卓板
-            sprintf(strtmp, "num_coin: %d num_queqian: %d\r\n", num_coin, num_queqian);
-            USART_DEBUG((char*)strtmp);
+            sprintf(strtemp, "num_coin: %d num_queqian: %d\r\n", num_coin, num_queqian);
+            USART_DEBUG((char*)strtemp);
 
             if(num_queqian != num_coin)
             {
                 Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_CoinNoEnough), LBYTE(USARTCMD_ZHUKONG_ANDROID_CoinNoEnough), dat_quehuo, 3);     //主控->安卓，钱数不足
-                sprintf(strtmp, "USARTCMD_ZHUKONG_ANDROID_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKONG_ANDROID_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], dat_quehuo[2]);
-                USART_DEBUG((char*)strtmp);
+                sprintf(strtemp, "USARTCMD_ZHUKONG_ANDROID_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKONG_ANDROID_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], dat_quehuo[2]);
+                USART_DEBUG((char*)strtemp);
             }
 
             num_queqian = num_coin;         //更新之前缺钱的数额

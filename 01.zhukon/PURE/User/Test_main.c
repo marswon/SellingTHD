@@ -4,6 +4,7 @@
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
 extern bool flag_huodao_det;
+char strtemp[100] = {0};         //打印缓存，用于输出打印信息
 
 int main(void)
 {
@@ -45,9 +46,6 @@ int main(void)
         if(flag_test == 1)
         {
             flag_test = 0;
-//            sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
-//            //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-//            USART_SendBytes(USART1, ndat, strlen((char*)ndat));
             SoftwareRESET();        //软件复位
         }
         else if(flag_test == 2)     //发送0x08

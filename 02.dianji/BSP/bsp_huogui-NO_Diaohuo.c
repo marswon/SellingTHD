@@ -8,7 +8,6 @@ bsp_huogui-NO_Diaohuo.c:没有掉货检测版本，货道直接出货，不检�
 //用于HuoDao_Init()初始化函数，一般情况下定义为1，只是保证货道运行在临界区，不保证运行在临界区的进入边界；
 //定义为0，货道会运行一周，保证停止在临界区的进入边界
 #define flag_init       1
-char str[30] = {0};     //调试
 u8 flag_line = 0;               //取货中，货道电机运行，对应层的标志位
 //bool flag_PUTTHING = FALSE;         //掉货检测标志位，默认为FALSE，有货物掉落标志位为TRUE，用在EXIT中断中
 //bool Enable_EXTI = FALSE;       //使能掉货检测外部中断
@@ -39,8 +38,8 @@ void HuoDao_Init(void)
                 }
             }
 
-            sprintf(str, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
-            USART_DEBUG(str);     //打印PC调试
+            sprintf(strtemp, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
+            USART_DEBUG(strtemp);     //打印PC调试
         }
     }
 
@@ -74,8 +73,8 @@ void HuoDao_Init(void)
                 }
             }
 
-            sprintf(str, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
-            USART_DEBUG(str);     //打印PC调试
+            sprintf(strtemp, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
+            USART_DEBUG(strtemp);     //打印PC调试
             flag_times = 0;     //标志位清零
         }
     }
@@ -89,7 +88,7 @@ void HuoDao_Init(void)
 void HuoDao_line_test(u8 i)
 {
     u8 j;
-    char str[30] = {0};     //调试
+    char strtemp[30] = {0};     //调试
     u16 flag_times = 0;
 
     for(j = 1; j <= ROW_MAX; j++)   //对应列编号
@@ -120,8 +119,8 @@ void HuoDao_line_test(u8 i)
             }
         }
 
-        sprintf(str, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
-        USART_DEBUG(str);     //打印PC调试
+        sprintf(strtemp, "LINE: %d; ROW: %d flag_times: %d\r\n", i, j, flag_times);
+        USART_DEBUG(strtemp);     //打印PC调试
         flag_times = 0;     //标志位清零
     }
 }
@@ -165,8 +164,8 @@ u8 HUOWU_Take(u8 m, u8 n)
         if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
                 || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
         {
-            sprintf(str, "flag_times: %d\r\n", flag_times);     //一般大于100
-            USART_DEBUG(str);     //打印PC调试
+            sprintf(strtemp, "flag_times: %d\r\n", flag_times);     //一般大于100
+            USART_DEBUG(strtemp);     //打印PC调试
 //            //开启掉货检测
 //            Enable_duishe();
             delay_ms(10);
@@ -191,9 +190,7 @@ u8 HUOWU_Take(u8 m, u8 n)
 //            USART_DEBUG("Diao huo\r\n");     //打印PC调试
 //            break;
 //        }
-
 //        j++;        //检测总次数纪录，达到设定值退出
-
 //        if(j >= 1000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
 //        {
 //            Disable_duishe();       //关闭掉货检测，需要取货检测
@@ -204,10 +201,8 @@ u8 HUOWU_Take(u8 m, u8 n)
 //            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
 //            return 0;
 //        }
-
 //        delay_ms(5);   //每隔5ms检测一次
 //    }
-
     return 1;
 }
 

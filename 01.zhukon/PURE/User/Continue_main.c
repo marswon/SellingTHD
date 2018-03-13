@@ -1,9 +1,14 @@
+/*******************************************************************************************
+Continue_main.c：实现安卓发送多条指令连续出货的情况
+********************************************************************************************/
+
 #include "stm32f10x.h"
 #include "bsp_common.h"
 
 void KEY_Scan(u8 mode);
 extern u8 start_flash_flag;
 extern bool flag_huodao_det;
+extern bool flag_quhuo;     //安卓取货标志位，默认可以取货
 char strtemp[100] = {0};         //打印缓存，用于输出打印信息
 
 int main(void)
@@ -30,10 +35,10 @@ int main(void)
     YingBiQi_Init();        //硬币器初始化
     ZhiBiQi_Init();        //纸币器流程初始化
 #endif
-    memset(ndat, 0, sizeof(strtemp));
-    sprintf((char*)strtemp, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
+    memset(ndat, 0, sizeof(ndat));
+    sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
     //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-    USART_SendBytes(USART1, (uint8_t*)strtemp, strlen((char*)strtemp));
+    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
 #if SYS_ENABLE_IAP
 
     if(IAP_Read_UpdateFLAG() != 1)
@@ -46,49 +51,52 @@ int main(void)
 
     while(1)
     {
-//        KEY_Scan(1);
-        if(USART_BufferRead(&data) == 1)
+        if(flag_quhuo == TRUE)      //本次取货完成，可以继续下次取货；本次没有完成，不会进行下次
         {
-            if(start_flash_flag == 0)
+            if(USART_BufferRead(&data) == 1)
             {
-                i++;
-                i = i % 255;
-                ntmp[i] = data;
-
-                if(ntmp[i - 1] == 0x0D && ntmp[i] == 0x0A) // 判断包尾
+                if(start_flash_flag == 0)
                 {
-                    nlen = MAKEWORD(ntmp[i - 4], ntmp[i - 5]); // 获取数据包长度
+                    i++;
+                    i = i % 255;
+                    ntmp[i] = data;
 
-                    if(i > nlen)
+                    if(ntmp[i - 1] == 0x0D && ntmp[i] == 0x0A) // 判断包尾
                     {
-                        ncrc = CRC16_isr(&ntmp[i - (nlen + 5)], nlen + 2); // crc计算
+                        nlen = MAKEWORD(ntmp[i - 4], ntmp[i - 5]); // 获取数据包长度
 
-                        if(ncrc == MAKEWORD(ntmp[i - 2], ntmp[i - 3])) // crc判断
+                        if(i > nlen)
                         {
-                            ncmd = MAKEWORD(ntmp[i - (nlen + 5 - 1)], ntmp[i - (nlen + 5)]); // 解析出串口协议命令,cmd1+cmd2
+                            ncrc = CRC16_isr(&ntmp[i - (nlen + 5)], nlen + 2); // crc计算
 
-                            if(nlen > 2) // 获取数据区域
+                            if(ncrc == MAKEWORD(ntmp[i - 2], ntmp[i - 3])) // crc判断
                             {
-                                memset(ndat, 0, sizeof(ndat));
-                                memcpy(ndat, &ntmp[i - (nlen + 5 - 2)], nlen - 2);
-                                Handle_USART_CMD(ncmd, (char *)ndat, nlen - 2); // 处理指令+数据
-                            }
-                            else
-                            {
-                                Handle_USART_CMD(ncmd, "", 0); // 处理指令
-                            }
+                                ncmd = MAKEWORD(ntmp[i - (nlen + 5 - 1)], ntmp[i - (nlen + 5)]); // 解析出串口协议命令,cmd1+cmd2
 
-                            i = 0;
+                                if(nlen > 2) // 获取数据区域
+                                {
+                                    memset(ndat, 0, sizeof(ndat));
+                                    memcpy(ndat, &ntmp[i - (nlen + 5 - 2)], nlen - 2);
+                                    Handle_USART_CMD(ncmd, (char *)ndat, nlen - 2); // 处理指令+数据
+                                }
+                                else
+                                {
+                                    Handle_USART_CMD(ncmd, "", 0); // 处理指令
+                                }
+
+                                i = 0;
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                USART_SendByte(UART4, data);
+                else
+                {
+                    USART_SendByte(UART4, data);
+                }
             }
         }
 
+//        KEY_Scan(1);
 #if USE_COIN
 
         if(flag_huodao_det == FALSE)        //默认是带有纸币器和硬币器的正常取货流程

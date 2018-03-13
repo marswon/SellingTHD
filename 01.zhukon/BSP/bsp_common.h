@@ -37,8 +37,8 @@ typedef enum
 #include "bsp_coin.h"
 
 #define   Version_Year       "28"       // year
-#define   Version_Month      "02"      // month
-#define   Version_Day        "28"      // day
+#define   Version_Month      "03"      // month
+#define   Version_Day        "13"      // day
 
 
 //位带操作
@@ -83,10 +83,7 @@ typedef enum
 #define PGout(n)   BIT_ADDR(GPIOG_ODR_Addr,n)
 #define PGin(n)    BIT_ADDR(GPIOG_IDR_Addr,n)
 
-//typedef enum
-//{
-//    FALSE = 0, TRUE = 1
-//} bool;
+
 
 unsigned short CRC16_isr(unsigned char *Dat, unsigned int len);
 bool strLenCmp(char *cmd1, char *cmd2, u8 len);
@@ -97,7 +94,7 @@ void delay_init(void);
 void delay_ms(u16 nms);
 void delay_us(u32 nus);
 
-
+extern char strtemp[100];         //打印缓存，用于输出打印信息
 
 
 #endif  //_BSP_COMMON_H

@@ -1,3 +1,7 @@
+/**********************************************************************************
+bsp_usart-Continue.c：适用于连续出货的版本，在回复“出货成功/失败”中加入地址信息
+**********************************************************************************/
+
 #include "bsp_usart.h"
 
 //除了串口2，其他串口发送信息的缓存
@@ -501,7 +505,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), dat_quehuo, 2);     //主控->电机，取货
             sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1]);
             USART_DEBUG((char*)strtemp);
-//            flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {
@@ -528,26 +532,45 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         }
 
 #endif
-    }
-    else
-    {
-        if(Data == DIANJI_ZHUKON_NUMb1)//出货成功
+        else if(Data == DIANJI_ZHUKON_NUMb1)//出货成功
         {
+            str_dat[0] = *(Dat);        //行号
+            str_dat[1] = *(Dat + 1);    //列号
             flag_chu_success = TRUE;       //电机->主控，出货成功，用于硬币器
             flag_quhuo = TRUE;      //上次取货完成，可以进行下次取货，用于多次取货的场景
-            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1));
+            Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1), str_dat, 2);       //发送指定行列出货成功
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb1:%04X\r\n", ZHUKON_ANZHUO_NUMb1);
             USART_DEBUG(strtemp);
         }
         else if(Data == DIANJI_ZHUKON_NUMb2)//出货失败
         {
+            str_dat[0] = *(Dat);        //行号
+            str_dat[1] = *(Dat + 1);    //列号
             flag_chu_fail = TRUE;         //电机->主控，出货失败，用于硬币器
             flag_quhuo = TRUE;      //上次取货完成，可以进行下次取货，用于多次取货的场景
-            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2));
+            Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2), str_dat, 2);       //发送指定行列出货失败
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
             USART_DEBUG(strtemp);
         }
-
+    }
+    else
+    {
+//        if(Data == DIANJI_ZHUKON_NUMb1)//出货成功
+//        {
+//            flag_chu_success = TRUE;       //电机->主控，出货成功，用于硬币器
+//            flag_quhuo = TRUE;      //上次取货完成，可以进行下次取货，用于多次取货的场景
+//            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1));
+//            sprintf(strtemp, "ZHUKON_ANZHUO_NUMb1:%04X\r\n", ZHUKON_ANZHUO_NUMb1);
+//            USART_DEBUG(strtemp);
+//        }
+//        else if(Data == DIANJI_ZHUKON_NUMb2)//出货失败
+//        {
+//            flag_chu_fail = TRUE;         //电机->主控，出货失败，用于硬币器
+//            flag_quhuo = TRUE;      //上次取货完成，可以进行下次取货，用于多次取货的场景
+//            Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2));
+//            sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
+//            USART_DEBUG(strtemp);
+//        }
         if(Data == DIANJI_ZHUKON_NUMb5)//层反馈异常
         {
             Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb5), LBYTE(ZHUKON_ANZHUO_NUMb5));

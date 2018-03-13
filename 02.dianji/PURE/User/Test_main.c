@@ -10,7 +10,6 @@ char strtemp[100] = {0};       //打印调试信息
 
 int main(void)
 {
-    u8 ndat[255] = {0}; // 协议数据
 #if SYS_ENABLE_IAP
     SCB->VTOR = 0x8002000;
     __enable_irq();
@@ -25,8 +24,8 @@ int main(void)
 //    TIM3_Int_Init(9, 7199); //通用定时器TIM2,1ms
     TIM3_Int_Init(999, 7199); //通用定时器TIM2,100ms
     HuoDao_Init();
-    sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
-    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
+    sprintf((char*)strtemp, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
+    USART_SendBytes(USART1, (uint8_t*)strtemp, strlen((char*)strtemp));
 #if SYS_ENABLE_IAP
 
     if(IAP_Read_UpdateFLAG() != 1)

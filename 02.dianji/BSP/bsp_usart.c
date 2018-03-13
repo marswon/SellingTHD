@@ -83,7 +83,7 @@ struct __FILE
 
 FILE __stdout;
 //定义_sys_exit()以避免使用半主机模式
-_sys_exit(int x)
+void _sys_exit(int x)
 {
     x = x;
 }
@@ -374,14 +374,12 @@ void USART_BufferWrite(u8 ntemp)
 ********************************************************************/
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {
-    char strtmp[64] = {0};
-
     if(dat_len != 0) // 处理数据区域
     {
         if(Data == ZHUKON_DIANJI_NUMb1) // 取"x行y列"货
         {
-            sprintf(strtmp, "Take: %d-%d\r\n", *Dat, *(Dat + 1));
-            USART_DEBUG(strtmp);
+            sprintf(strtemp, "Take: %d-%d\r\n", *Dat, *(Dat + 1));
+            USART_DEBUG(strtemp);
             flag_take_huowu = 1;   //取货标志位
             HUOWU_Take(*Dat, *(Dat + 1));
             flag_take_huowu = 0;
@@ -393,8 +391,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         if(Data == USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji) //准备升级电机板
         {
             Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji), LBYTE(USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji);
-            USART_DEBUG(strtmp);
+            sprintf(strtemp, "USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_WillUpdateDianji);
+            USART_DEBUG(strtemp);
             IAP_Reset_UpdateFLAG();
             __disable_irq();
             NVIC_SystemReset();
@@ -402,14 +400,14 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         else if(Data == USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji) //开始升级电机板
         {
             Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji), LBYTE(USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji);
-            USART_DEBUG(strtmp);
+            sprintf(strtemp, "USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StartUpdateDianji);
+            USART_DEBUG(strtemp);
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji) //返回结束升级电机板
         {
             Send_CMD(USART2, HBYTE(USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji), LBYTE(USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji));
-            sprintf(strtmp, "USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji);
-            USART_DEBUG(strtmp);
+            sprintf(strtemp, "USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji: %04X\r\n", USARTCMD_ZHUKONG_DIANJI_StopUpdateDianji);
+            USART_DEBUG(strtemp);
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {

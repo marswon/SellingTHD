@@ -15,7 +15,7 @@ static u8 Init_05_YING = 0;
 static u8 Init_10_YING = 0;
 //手动支出标志位，用于在手动支出过程中关闭纸币器和硬币器的收钱功能
 static bool flag_shoudong = FALSE;
-char strtmp[100] = {0};     //打印调试信息缓存信息
+
 
 //功能：硬币器初始化
 //入口参数：
@@ -94,9 +94,9 @@ void YingBiQi_USE(void)
                 break;
         }
 
-        sprintf((char*)strtmp, "num_05:%d num_10:%d man_coin:%d pre_05:%d pre_10:%d\r\n", num_05_TUBE, num_10_TUBE, man_coin, pre_05_TUBE, pre_10_TUBE);
+        sprintf((char*)strtemp, "num_05:%d num_10:%d man_coin:%d pre_05:%d pre_10:%d\r\n", num_05_TUBE, num_10_TUBE, man_coin, pre_05_TUBE, pre_10_TUBE);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
         //自上次出货后投入的硬币数
         num_05_TUBE -= pre_05_TUBE;
         num_10_TUBE -= pre_10_TUBE;
@@ -124,9 +124,9 @@ void YingBiQi_USE(void)
     else if(rev == 99)        //手动支出结束，需要更新硬币值
     {
         rev = 0;
-        sprintf((char*)strtmp, "REV : %d\r\n", rev);
+        sprintf((char*)strtemp, "REV : %d\r\n", rev);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
         DET_COIN_DISENABLE_YING();      //禁止收钱
 
         //发送0A，纪录下硬币枚数
@@ -141,16 +141,16 @@ void YingBiQi_USE(void)
     else if(rev == 8)        //A管接收1元已满
     {
         man_coin += 10;     //纪录投入一元数量
-        sprintf((char*)strtmp, "man_coin: %d\r\n", man_coin);
+        sprintf((char*)strtemp, "man_coin: %d\r\n", man_coin);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
     }
     else if(rev == 9)        //A管接收5角已满
     {
         man_coin += 5;     //纪录投入5角数量
-        sprintf((char*)strtmp, "man_coin : %d\r\n", man_coin);
+        sprintf((char*)strtemp, "man_coin : %d\r\n", man_coin);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
     }
 
     if(flag_take_huowu == TRUE)        //安卓->主控，发送"取货"命令
@@ -161,9 +161,9 @@ void YingBiQi_USE(void)
         }
         while(rev == 0);        //CHK校验和有误
 
-        sprintf((char*)strtmp, "num_05_TUBE:%d num_10_TUBE:%d man_coin:%d\r\n", num_05_TUBE, num_10_TUBE, man_coin);
+        sprintf((char*)strtemp, "num_05_TUBE:%d num_10_TUBE:%d man_coin:%d\r\n", num_05_TUBE, num_10_TUBE, man_coin);
         //串口2改为串口1作为PC调试,串口2作为投币器和纸币器通信
-        USART_DEBUG((char*)strtmp);
+        USART_DEBUG((char*)strtemp);
         //自上次出货后投入的硬币数
         num_05_TUBE = num_05_TUBE - pre_05_TUBE;
         num_10_TUBE = num_10_TUBE - pre_10_TUBE;
@@ -173,8 +173,8 @@ void YingBiQi_USE(void)
         {
             DET_COIN_DISENABLE_YING();      //禁止收钱
             Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), dat_quehuo, 2);     //主控->电机，取货
-            sprintf((char*)strtmp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1], price_num);
-            USART_DEBUG((char*)strtmp);
+            sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d %d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1], price_num);
+            USART_DEBUG((char*)strtemp);
             balance = num_coin - price_num;     //更新余额
             man_coin = 0;       //掉入现金盒的钱数清零
             flag_take_huowu = FALSE;    //判定该次取货完成
@@ -198,8 +198,8 @@ void YingBiQi_USE(void)
         {
             //取货，投入金额不足，主控->安卓
             Send_CMD_DAT(USART3, HBYTE(USARTCMD_ZHUKONG_ANDROID_CoinNoEnough), LBYTE(USARTCMD_ZHUKONG_ANDROID_CoinNoEnough), dat_quehuo, 2);     //主控->电机，取货
-            sprintf(strtmp, "USARTCMD_ZHUKONG_ANDROID_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKONG_ANDROID_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], price_num);
-            USART_DEBUG((char*)strtmp);
+            sprintf(strtemp, "USARTCMD_ZHUKONG_ANDROID_CoinNoEnough: %04X,%d-%d %d\r\n", USARTCMD_ZHUKONG_ANDROID_CoinNoEnough, dat_quehuo[0], dat_quehuo[1], price_num);
+            USART_DEBUG((char*)strtemp);
         }
     }
 }

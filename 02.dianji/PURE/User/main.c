@@ -26,8 +26,8 @@ int main(void)
 //    TIM3_Int_Init(9, 7199); //通用定时器TIM2,1ms
     TIM3_Int_Init(999, 7199); //通用定时器TIM2,100ms
     HuoDao_Init();
-    sprintf((char*)ndat, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
-    USART_SendBytes(USART1, ndat, strlen((char*)ndat));
+    sprintf((char*)strtemp, "%s.%s%s\r\n", Version_Year, Version_Month, Version_Day);
+    USART_SendBytes(USART1, (uint8_t*)strtemp, strlen((char*)strtemp));
 #if SYS_ENABLE_IAP
 
     if(IAP_Read_UpdateFLAG() != 1)
