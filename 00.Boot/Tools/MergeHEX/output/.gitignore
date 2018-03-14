@@ -1,0 +1,8 @@
+~*
+$*
+*.TMP
+*.save-failed
+*.bak
+*.exe
+*.o
+*.hex
