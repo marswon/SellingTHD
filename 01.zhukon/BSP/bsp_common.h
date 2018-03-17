@@ -38,7 +38,7 @@ typedef enum
 
 #define   Version_Year       "28"       // year
 #define   Version_Month      "03"      // month
-#define   Version_Day        "13"      // day
+#define   Version_Day        "15"      // day
 
 
 //位带操作

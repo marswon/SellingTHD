@@ -547,8 +547,7 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
             USART_DEBUG(strtemp);
         }
-
-        if(Data == DIANJI_ZHUKON_NUMb5)//层反馈异常
+        else if(Data == DIANJI_ZHUKON_NUMb5)//层反馈异常
         {
             Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb5), LBYTE(ZHUKON_ANZHUO_NUMb5));
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb5:%04X\r\n", ZHUKON_ANZHUO_NUMb5);

@@ -1,3 +1,7 @@
+/***********************************************************************************************************
+bsp_huigui-Continue.c：适用于连续出货的版本，在回复“出货成功/失败”中加入地址信息
+***********************************************************************************************************/
+
 #include "bsp_huogui.h"
 
 //用于HuoDao_Init()初始化函数，一般情况下定义为1，只是保证货道运行在临界区，不保证运行在临界区的进入边界；
@@ -127,9 +131,12 @@ void HuoDao_line_test(u8 i)
 u8 HUOWU_Take(u8 m, u8 n)
 {
     u16 flag_times = 0;   //运行时间标志位，第一次运行时间必须保证越过临界区
+    u8 strstr[2] = {0};
     u16 j = 0;
     Motor_HuoDao_Move(m, n);    //对应货道电机运行
     flag_PUTTHING = FALSE;      //清零
+    strstr[0] = m;      //行号
+    strstr[1] = n;      //列号
 
     for(;;)
     {
@@ -145,12 +152,12 @@ u8 HUOWU_Take(u8 m, u8 n)
 
         flag_times++;
 
-        if(flag_times == 30)     //结束时一般大于100
+        if(flag_times == 100)     //结束时一般大于100
         {
             //开启掉货检测
             Enable_duishe();      //目前有异响，关闭掉货检测
         }
-        else if(flag_times == 40)
+        else if(flag_times == 110)
         {
             Enable_EXTI = TRUE;     //开启外部检测
         }
@@ -172,9 +179,9 @@ u8 HUOWU_Take(u8 m, u8 n)
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货成功，指定行列
-            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+            Send_CMD_DAT(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1), (char*)strstr, 2);
             //PC调试
-            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+            Send_CMD_DAT(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1), (char*)strstr, 2);
             flag_PUTTHING = FALSE;      //清零
             Enable_EXTI = FALSE;     //关闭外部检测
             USART_DEBUG("Diao huo\r\n");     //打印PC调试
@@ -187,10 +194,10 @@ u8 HUOWU_Take(u8 m, u8 n)
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
             //电机->主控，出货失败，指定行列
-            Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+            Send_CMD_DAT(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2), (char*)strstr, 2);
             Enable_EXTI = FALSE;     //关闭外部检测
             //PC调试
-            Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+            Send_CMD_DAT(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2), (char*)strstr, 2);
             return 0;
         }
 
