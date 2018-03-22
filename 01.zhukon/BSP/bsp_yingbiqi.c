@@ -1,5 +1,6 @@
 #include "bsp_yingbiqi.h"
 
+#if (USE_COIN == 1)
 //硬币器使用的标志位，默认都是不需要使用的
 #define flag_YingBiQi_USE   0
 
@@ -965,3 +966,9 @@ u8 Send_CMD_EXP_coin(u16 exp_cmd, u8 *data)
     return 1;
 }
 #endif
+
+
+
+
+#endif
+

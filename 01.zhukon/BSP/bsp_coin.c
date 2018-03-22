@@ -1,6 +1,6 @@
 #include "bsp_coin.h"
 
-
+#if (USE_COIN == 1)
 static u8 num_ZHIBI = 0;     //纪录投入纸币的金额
 static u16 balance = 0;  //投入货币取货后投入的余额
 
@@ -253,7 +253,7 @@ u16 GetBalance(void)
 
 
 
-
+#endif
 
 
 

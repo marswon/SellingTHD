@@ -1,5 +1,6 @@
 #include "bsp_zhibiqi.h"
 
+#if (USE_COIN == 1)
 //纸币器使用的标志位，默认都是不需要使用的
 #define flag_ZhiBiQi_USE   0
 
@@ -718,5 +719,7 @@ void Send_IDENTIFICATION_ZHI2(void)
 
 
 
+
+#endif
 
 

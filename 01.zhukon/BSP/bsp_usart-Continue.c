@@ -8,6 +8,8 @@ bsp_usart-Continue.c：适用于连续出货的版本，在回复“出货成功
 u8 UsartBuffer[USART_BUFFER_LEN] = {0}; //数据缓冲区
 u16 UsartWptr = 0;
 u16 UsartRptr = 0;
+
+#if (USE_COIN == 1)
 //纸币器和硬币器POLL指令，回复数据专用缓存
 u8 BUF_POLL[20] = {0};
 //硬币器TUBE STATUS指令，回复数据专用缓存
@@ -18,6 +20,7 @@ u8 price_num = 0;       //货物价格
 //纸币器和硬币器某些指令，回复数据共用缓存
 u8 BUF_common[40] = {0};
 char dat_quehuo[3] = {0};     //缓存取货几行几列，用于硬币器使用
+#endif
 
 bool flag_huodao_det = FALSE;       //货道电机单独测试，默认为带有硬币器和纸币器的正常出货
 bool flag_chu_fail = FALSE;        //出货失败标志位，电机->主控，默认为0
@@ -28,9 +31,6 @@ u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
 
 bool flag_quhuo = TRUE;     //安卓取货标志位，默认可以取货
-
-
-//bool flag_COIN_print = FALSE;       //纸币器，硬币器实时打印标志位
 
 //printf函数重定向到串口1
 #if 1
@@ -104,13 +104,10 @@ void USART2_IRQHandler(void)
         nTemp = USART_ReceiveData(USART2);
         USART_ClearITPendingBit(USART2, USART_IT_RXNE); //clear flag
         /************************************************/
+#if (USE_COIN == 1)
         rev_data_len++;     //硬币器回复数据计数
         BufWrite_COIN(nTemp);         //纸币器，硬币器回复数据专用缓存
-//        USART_SendByte(USART1, nTemp);
-//        if(flag_COIN_print == TRUE)        //根据指令开关纸币器回复实时打印
-//        {
-//            USART_SendByte(USART1, nTemp);
-//        }
+#endif
     }
 
     if(USART_GetFlagStatus(USART2, USART_FLAG_ORE) == SET) //overflow
@@ -425,6 +422,7 @@ void USART_BufferWrite(u8 ntemp)
     UsartWptr = (UsartWptr + 1) % USART_BUFFER_LEN;
 }
 
+#if (USE_COIN == 1)
 //功能：缓存串口2接收到的硬币器回复的信息
 //说明：硬币器收到命令后，会回复信息给我们，我们每条指令用一个单独的BUF来接收。
 //发送串口指令时，我们会指定mode位
@@ -459,6 +457,42 @@ void BufWrite_COIN(u8 ntemp)
         default :
             break;
     }
+}
+#endif
+
+#define Continue_BUFFER_LEN     100
+static u8 Continue_Wptr = 0;
+static u8 Continue_Rptr = 0;
+u8 Continue_Buffer[Continue_BUFFER_LEN] = {0};
+//功能：连续出货缓存发送的货架信息
+//说明：用在连续出货中，缓存对应货物的行列编号
+void Continue_BufferWrite(const u8 line, const u8 row)
+{
+    if((Continue_Wptr + 2) % Continue_BUFFER_LEN == Continue_Rptr) // full
+    {
+        return;
+    }
+
+    Continue_Buffer[Continue_Wptr] = line;      //纪录行号
+    Continue_Wptr = (Continue_Wptr + 1) % Continue_BUFFER_LEN;
+    Continue_Buffer[Continue_Wptr] = row;      //纪录行号
+    Continue_Wptr = (Continue_Wptr + 1) % Continue_BUFFER_LEN;
+}
+
+//功能：读取缓存的货架信息
+//说明：用在连续出货中，读取队列中对应货物的行列编号
+u8 Continue_BufferRead(u8* dat_line, u8* dat_row)
+{
+    if(Continue_Rptr == Continue_Wptr) // empty
+    {
+        return 0;
+    }
+
+    *dat_line = Continue_Buffer[Continue_Rptr];
+    Continue_Rptr = (Continue_Rptr + 1) % Continue_BUFFER_LEN; //保证读位置值不溢出
+    *dat_row = Continue_Buffer[Continue_Rptr];
+    Continue_Rptr = (Continue_Rptr + 1) % Continue_BUFFER_LEN; //保证读位置值不溢出
+    return 1;
 }
 
 //功能：串口协议命令处理
@@ -500,12 +534,20 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         else if(Data == ANZHUO_ZHUKON_QUHUO)  // 取"x行y列"货,发送到电机板，只管出货
         {
 //            flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
-            dat_quehuo[0] = *Dat;       //取货行号
-            dat_quehuo[1] = *(Dat + 1); //取货列号
-            Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), dat_quehuo, 2);     //主控->电机，取货
-            sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, dat_quehuo[0], dat_quehuo[1]);
-            USART_DEBUG((char*)strtemp);
-            flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            str_dat[0] = *Dat;       //取货行号
+            str_dat[1] = *(Dat + 1); //取货列号
+
+            if(flag_quhuo == TRUE)      //当前没有正在取货的
+            {
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
+                sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
+                USART_DEBUG((char*)strtemp);
+                flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            }
+            else
+            {
+                Continue_BufferWrite(str_dat[0], str_dat[1]);       //连续出货，用于缓存行列信息
+            }
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {
@@ -541,6 +583,15 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1), str_dat, 2);       //发送指定行列出货成功
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb1:%04X\r\n", ZHUKON_ANZHUO_NUMb1);
             USART_DEBUG(strtemp);
+
+            if(Continue_Wptr != Continue_Rptr)       //存在新写入的货架信息
+            {
+                Continue_BufferRead((u8*)&str_dat[0], (u8*)&str_dat[1]);      //读取新的货架号
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
+                sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
+                USART_DEBUG((char*)strtemp);
+                flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            }
         }
         else if(Data == DIANJI_ZHUKON_NUMb2)//出货失败
         {
@@ -551,6 +602,15 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2), str_dat, 2);       //发送指定行列出货失败
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
             USART_DEBUG(strtemp);
+
+            if(Continue_Wptr != Continue_Rptr)       //存在新写入的货架信息
+            {
+                Continue_BufferRead((u8*)&str_dat[0], (u8*)&str_dat[1]);      //读取新的货架号
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
+                sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
+                USART_DEBUG((char*)strtemp);
+                flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            }
         }
     }
     else

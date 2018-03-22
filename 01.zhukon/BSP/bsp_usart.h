@@ -6,7 +6,7 @@
 /***************************************************/
 //串口接收队列缓存长度
 #define USART_BUFFER_LEN 5000
-#define SYS_ENABLE_IAP   0
+#define SYS_ENABLE_IAP   1
 
 /***************************************************/
 //定义配置使能
@@ -131,6 +131,10 @@ u8 USART_BufferRead(u8 *data);
 void Send_CMD(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD);
 void Send_CMD_DAT(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD, char *dat, u16 dat_len);
 
+//功能：连续出货缓存发送的货架信息
+void Continue_BufferWrite(const u8 line, const u8 row);
+//功能：读取缓存的货架信息
+u8 Continue_BufferRead(u8* dat_line, u8* dat_row);
 
 //软件复位操作
 void SoftwareRESET(void);

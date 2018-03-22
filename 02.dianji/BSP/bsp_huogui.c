@@ -144,6 +144,7 @@ u8 HUOWU_Take(u8 m, u8 n)
         }
 
         flag_times++;
+#if (ENABLE_Diaohuo == 0)
 
         if(flag_times == 30)     //结束时一般大于100
         {
@@ -155,6 +156,8 @@ u8 HUOWU_Take(u8 m, u8 n)
             Enable_EXTI = TRUE;     //开启外部检测
         }
 
+#endif
+
         if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
                 || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
         {
@@ -165,6 +168,8 @@ u8 HUOWU_Take(u8 m, u8 n)
             break;
         }
     }
+
+#if (ENABLE_Diaohuo == 0)
 
     for(;;)
     {
@@ -197,6 +202,7 @@ u8 HUOWU_Take(u8 m, u8 n)
         delay_ms(5);   //每隔5ms检测一次
     }
 
+#endif
     return 1;
 }
 

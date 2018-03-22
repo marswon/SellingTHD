@@ -5,7 +5,7 @@
 
 /**********************************************/
 #define USART_BUFFER_LEN 5000
-#define SYS_ENABLE_IAP   0
+#define SYS_ENABLE_IAP   1
 //定义配置使能
 #define USART1_CONFIG_ENABLED                (1)
 #define USART2_CONFIG_ENABLED                (1)

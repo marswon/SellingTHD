@@ -26,7 +26,7 @@ int main(void)
     delay_init();
     RUN_Init();
     //使用纸币器和硬币器选择位
-#if USE_COIN
+#if (USE_COIN == 1)
     YingBiQi_Init();        //硬币器初始化
     ZhiBiQi_Init();        //纸币器流程初始化
 #endif
@@ -89,13 +89,13 @@ int main(void)
             }
         }
 
-#if USE_COIN
+#if (USE_COIN == 1)
 
         if(flag_huodao_det == FALSE)        //默认是带有纸币器和硬币器的正常取货流程
         {
-            YingBiQi_USE();         //硬币器使用
+//            YingBiQi_USE();         //硬币器使用
 //            ZhiBiQi_USE();          //纸币器使用
-//            COIN_use();         //纸币器和硬币器联合使用
+            COIN_use();         //纸币器和硬币器联合使用
 //            delay_ms(100);
         }
 

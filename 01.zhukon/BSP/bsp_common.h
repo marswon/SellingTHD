@@ -34,7 +34,10 @@ typedef enum
 #include "bsp_delay.h"
 #include "bsp_timer.h"
 #include "bsp_yingbiqi.h"
+
+#if (USE_COIN == 1)     //使用硬币器和纸币器
 #include "bsp_coin.h"
+#endif
 
 #define   Version_Year       "28"       // year
 #define   Version_Month      "03"      // month
