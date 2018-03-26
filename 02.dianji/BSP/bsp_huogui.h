@@ -4,6 +4,12 @@
 #include "bsp_sys.h"
 
 
+//连续出货和不连续出货使能位，二选一;值为1，表示连续出货;值为2，表示不连续出货
+#define HUOWU_Continue      1
+
+//掉货检测使能位，默认开启掉货检测，值为0开启掉货检测；值为1关闭掉货检测
+#define ENABLE_Diaohuo      0
+
 //货道电机通电，断电对应行，列的电平
 #define LINE_ENABLE     0
 #define ROW_ENABLE      1

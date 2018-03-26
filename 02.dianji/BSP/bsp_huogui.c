@@ -128,8 +128,11 @@ u8 HUOWU_Take(u8 m, u8 n)
 {
     u16 flag_times = 0;   //运行时间标志位，第一次运行时间必须保证越过临界区
     u16 j = 0;
+    u8 strstr[2] = {0};
     Motor_HuoDao_Move(m, n);    //对应货道电机运行
     flag_PUTTHING = FALSE;      //清零
+    strstr[0] = m;      //行号
+    strstr[1] = n;      //列号
 
     for(;;)
     {
@@ -146,12 +149,12 @@ u8 HUOWU_Take(u8 m, u8 n)
         flag_times++;
 #if (ENABLE_Diaohuo == 0)
 
-        if(flag_times == 30)     //结束时一般大于100
+        if(flag_times == 5)     //结束时一般大于100
         {
             //开启掉货检测
             Enable_duishe();      //目前有异响，关闭掉货检测
         }
-        else if(flag_times == 40)
+        else if(flag_times == 10)
         {
             Enable_EXTI = TRUE;     //开启外部检测
         }
@@ -176,10 +179,17 @@ u8 HUOWU_Take(u8 m, u8 n)
         if(flag_PUTTHING == TRUE)       //检测到货物，高电平
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
+#if (HUOWU_Continue == 2)
             //电机->主控，出货成功，指定行列
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
             //PC调试
             Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1));
+#elif (HUOWU_Continue == 1)
+            //电机->主控，出货成功，指定行列
+            Send_CMD_DAT(USART2, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1), (char*)strstr, 2);
+            //PC调试
+            Send_CMD_DAT(USART1, HBYTE(DIANJI_ZHUKON_NUMb1), LBYTE(DIANJI_ZHUKON_NUMb1), (char*)strstr, 2);
+#endif
             flag_PUTTHING = FALSE;      //清零
             Enable_EXTI = FALSE;     //关闭外部检测
             USART_DEBUG("Diao huo\r\n");     //打印PC调试
@@ -191,11 +201,19 @@ u8 HUOWU_Take(u8 m, u8 n)
         if(j >= 1000)         //达到10次，还没有检查到出货成功，认为出货失败,暂定5s检测
         {
             Disable_duishe();       //关闭掉货检测，需要取货检测
+#if (HUOWU_Continue == 2)
             //电机->主控，出货失败，指定行列
             Send_CMD(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
             Enable_EXTI = FALSE;     //关闭外部检测
             //PC调试
             Send_CMD(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2));
+#elif (HUOWU_Continue == 1)
+            //电机->主控，出货失败，指定行列
+            Send_CMD_DAT(USART2, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2), (char*)strstr, 2);
+            Enable_EXTI = FALSE;     //关闭外部检测
+            //PC调试
+            Send_CMD_DAT(USART1, HBYTE(DIANJI_ZHUKON_NUMb2), LBYTE(DIANJI_ZHUKON_NUMb2), (char*)strstr, 2);
+#endif
             return 0;
         }
 

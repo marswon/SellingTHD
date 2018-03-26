@@ -5,7 +5,14 @@
 
 /**********************************************/
 #define USART_BUFFER_LEN 5000
-#define SYS_ENABLE_IAP   1
+
+//弹簧道电机升级HEX版本，定义DIANJI_SYS_UPDATE宏，其他版本没有定义
+#ifndef DIANJI_SYS_UPDATE
+#define SYS_ENABLE_IAP      0
+#else
+#define SYS_ENABLE_IAP      1
+#endif
+
 //定义配置使能
 #define USART1_CONFIG_ENABLED                (1)
 #define USART2_CONFIG_ENABLED                (1)
