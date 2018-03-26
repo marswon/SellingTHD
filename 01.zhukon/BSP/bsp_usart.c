@@ -1,3 +1,7 @@
+/**********************************************************************************
+bsp_usart.c：适用于连续出货的版本，在回复“出货成功/失败”中加入地址信息
+**********************************************************************************/
+
 #include "bsp_usart.h"
 
 //除了串口2，其他串口发送信息的缓存
@@ -25,7 +29,6 @@ bool flag_take_huowu = FALSE;       //取货标志位，安卓->主控，取货�
 u8 flag_test = 0;                 //调试标记位，用于PC机调试，根据不同值执行不同动作
 u8 start_flash_flag = 0;
 bool flag_enable_debug = FALSE;
-
 bool flag_quhuo = TRUE;     //安卓取货标志位，默认可以取货
 
 //printf函数重定向到串口1
@@ -374,7 +377,6 @@ u16 USART_BufferLength(void)
 
 void USART_BufferWrite(u8 ntemp)
 {
-    //char strtemp[32] = {0};
     if((UsartWptr + 1) % USART_BUFFER_LEN == UsartRptr) // full
     {
         return;
@@ -454,7 +456,44 @@ void BufWrite_COIN(u8 ntemp)
             break;
     }
 }
+#endif
 
+#if (HUOWU_Continue == 1)       //连续出货
+#define Continue_BUFFER_LEN     100
+static u8 Continue_Wptr = 0;
+static u8 Continue_Rptr = 0;
+u8 Continue_Buffer[Continue_BUFFER_LEN] = {0};
+
+//功能：连续出货缓存发送的货架信息
+//说明：用在连续出货中，缓存对应货物的行列编号
+void Continue_BufferWrite(const u8 line, const u8 row)
+{
+    if((Continue_Wptr + 2) % Continue_BUFFER_LEN == Continue_Rptr) // full
+    {
+        return;
+    }
+
+    Continue_Buffer[Continue_Wptr] = line;      //纪录行号
+    Continue_Wptr = (Continue_Wptr + 1) % Continue_BUFFER_LEN;
+    Continue_Buffer[Continue_Wptr] = row;      //纪录行号
+    Continue_Wptr = (Continue_Wptr + 1) % Continue_BUFFER_LEN;
+}
+
+//功能：读取缓存的货架信息
+//说明：用在连续出货中，读取队列中对应货物的行列编号
+u8 Continue_BufferRead(u8* dat_line, u8* dat_row)
+{
+    if(Continue_Rptr == Continue_Wptr) // empty
+    {
+        return 0;
+    }
+
+    *dat_line = Continue_Buffer[Continue_Rptr];
+    Continue_Rptr = (Continue_Rptr + 1) % Continue_BUFFER_LEN; //保证读位置值不溢出
+    *dat_row = Continue_Buffer[Continue_Rptr];
+    Continue_Rptr = (Continue_Rptr + 1) % Continue_BUFFER_LEN; //保证读位置值不溢出
+    return 1;
+}
 #endif
 
 //功能：串口协议命令处理
@@ -498,10 +537,25 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 //            flag_take_huowu = TRUE;    //用于纸币器和硬币器检测取货命令
             str_dat[0] = *Dat;       //取货行号
             str_dat[1] = *(Dat + 1); //取货列号
+#if (HUOWU_Continue == 1)       //连续出货
+
+            if(flag_quhuo == TRUE)      //当前没有正在取货的
+            {
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
+                sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
+                USART_DEBUG((char*)strtemp);
+                flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            }
+            else
+            {
+                Continue_BufferWrite(str_dat[0], str_dat[1]);       //连续出货，用于缓存行列信息
+            }
+
+#elif (HUOWU_Continue == 2)       //不连续出货
             Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
             sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
             USART_DEBUG((char*)strtemp);
-//            flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+#endif
         }
         else if(Data == USARTCMD_ZHUKONG_DIANJI_GetDianjiVer) // 获取电机版本
         {
@@ -528,9 +582,52 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
         }
 
 #endif
+#if (HUOWU_Continue == 1)       //连续出货
+        else if(Data == DIANJI_ZHUKON_NUMb1)//出货成功
+        {
+            str_dat[0] = *(Dat);        //行号
+            str_dat[1] = *(Dat + 1);    //列号
+            flag_chu_success = TRUE;       //电机->主控，出货成功，用于硬币器
+            flag_quhuo = TRUE;      //上次取货完成，可以进行下次取货，用于多次取货的场景
+            Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1), str_dat, 2);       //发送指定行列出货成功
+            sprintf(strtemp, "ZHUKON_ANZHUO_NUMb1:%04X\r\n", ZHUKON_ANZHUO_NUMb1);
+            USART_DEBUG(strtemp);
+
+            if(Continue_Wptr != Continue_Rptr)       //存在新写入的货架信息
+            {
+                Continue_BufferRead((u8*)&str_dat[0], (u8*)&str_dat[1]);      //读取新的货架号
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
+                sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
+                USART_DEBUG((char*)strtemp);
+                flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            }
+        }
+        else if(Data == DIANJI_ZHUKON_NUMb2)//出货失败
+        {
+            str_dat[0] = *(Dat);        //行号
+            str_dat[1] = *(Dat + 1);    //列号
+            flag_chu_fail = TRUE;         //电机->主控，出货失败，用于硬币器
+            flag_quhuo = TRUE;      //上次取货完成，可以进行下次取货，用于多次取货的场景
+            Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2), str_dat, 2);       //发送指定行列出货失败
+            sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
+            USART_DEBUG(strtemp);
+
+            if(Continue_Wptr != Continue_Rptr)       //存在新写入的货架信息
+            {
+                Continue_BufferRead((u8*)&str_dat[0], (u8*)&str_dat[1]);      //读取新的货架号
+                Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
+                sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
+                USART_DEBUG((char*)strtemp);
+                flag_quhuo = FALSE;         //本次取货开始，本次取货没有结束，没法进行下次取货
+            }
+        }
+
+#endif
     }
     else
     {
+#if (HUOWU_Continue == 2)       //不连续出货
+
         if(Data == DIANJI_ZHUKON_NUMb1)//出货成功
         {
             flag_chu_success = TRUE;       //电机->主控，出货成功，用于硬币器
@@ -547,7 +644,10 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
             USART_DEBUG(strtemp);
         }
-        else if(Data == DIANJI_ZHUKON_NUMb5)//层反馈异常
+
+#endif
+
+        if(Data == DIANJI_ZHUKON_NUMb5)//层反馈异常
         {
             Send_CMD(USART3, HBYTE(ZHUKON_ANZHUO_NUMb5), LBYTE(ZHUKON_ANZHUO_NUMb5));
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb5:%04X\r\n", ZHUKON_ANZHUO_NUMb5);

@@ -22,8 +22,14 @@ typedef enum
 #define LBYTE(a)               ((unsigned char)((unsigned short)(a)& 0xff))
 #define MAKEWORD(bLow,bHigh)   ((unsigned short)(((unsigned char)(bLow))|(((unsigned short)((unsigned char)(bHigh)))<<8)))
 
+/***************************************************************************************************/
+
 //硬币器，纸币器使用选择位,使用纸币器和硬币器，值为1；不使用，值为0
 #define USE_COIN        0
+//弹簧道连续出货和不连续出货版本选择，二选一;值为1，表示连续出货;值为2，表示不连续出货
+#define HUOWU_Continue      1
+
+/****************************************************************************************************/
 
 #include "bsp_usart.h"
 #include "bsp_gpio.h"

@@ -6,7 +6,12 @@
 /***************************************************/
 //串口接收队列缓存长度
 #define USART_BUFFER_LEN 5000
-#define SYS_ENABLE_IAP   1
+//弹簧道主控升级HEX版本，定义ZHUKONG_SYS_UPDATE宏，其他版本没有定义
+#ifndef ZHUKONG_SYS_UPDATE
+#define SYS_ENABLE_IAP      0
+#else
+#define SYS_ENABLE_IAP      1
+#endif
 
 /***************************************************/
 //定义配置使能
