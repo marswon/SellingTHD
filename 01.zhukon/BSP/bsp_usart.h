@@ -137,7 +137,7 @@ void Send_CMD(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD);
 void Send_CMD_DAT(USART_TypeDef* USARTx, u8 HCMD, u8 LCMD, char *dat, u16 dat_len);
 
 //功能：连续出货缓存发送的货架信息
-void Continue_BufferWrite(const u8 line, const u8 row);
+u8 Continue_BufferWrite(const u8 line, const u8 row);
 //功能：读取缓存的货架信息
 u8 Continue_BufferRead(u8* dat_line, u8* dat_row);
 

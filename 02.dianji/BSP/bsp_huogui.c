@@ -133,7 +133,12 @@ u8 HUOWU_Take(u8 m, u8 n)
     flag_PUTTHING = FALSE;      //清零
     strstr[0] = m;      //行号
     strstr[1] = n;      //列号
-
+#if (ENABLE_Diaohuo == 0)
+    //开启掉货检测，电机动作之前开启掉货检测
+    Enable_duishe();      //目前有异响，关闭掉货检测
+    Enable_EXTI = TRUE;     //开启外部检测
+    
+#endif
     for(;;)
     {
         if(flag_times == 0)
@@ -147,25 +152,25 @@ u8 HUOWU_Take(u8 m, u8 n)
         }
 
         flag_times++;
-#if (ENABLE_Diaohuo == 0)
+//#if (ENABLE_Diaohuo == 0)
 
-        if(flag_times == 5)     //结束时一般大于100
-        {
-            //开启掉货检测
-            Enable_duishe();      //目前有异响，关闭掉货检测
-        }
-        else if(flag_times == 10)
-        {
-            Enable_EXTI = TRUE;     //开启外部检测
-        }
+//        if(flag_times == 5)     //结束时一般大于100
+//        {
+//            //开启掉货检测
+//            Enable_duishe();      //目前有异响，关闭掉货检测
+//        }
+//        else if(flag_times == 10)
+//        {
+//            Enable_EXTI = TRUE;     //开启外部检测
+//        }
 
-#endif
+//#endif
 
         if((LINEFB1 == 1 && flag_line == 1) || (LINEFB2 == 1 && flag_line == 2) || (LINEFB3 == 1 && flag_line == 3) || (LINEFB4 == 1 && flag_line == 4) || (LINEFB5 == 1 && flag_line == 5) || (LINEFB6 == 1 && flag_line == 6)
                 || (LINEFB7 == 1 && flag_line == 7) || (LINEFB8 == 1 && flag_line == 8) || (LINEFB9 == 1 && flag_line == 9) || (LINEFB10 == 1 && flag_line == 10))
         {
-            sprintf(strtemp, "flag_times: %d\r\n", flag_times);     //一般大于100
-            USART_DEBUG(strtemp);     //打印PC调试
+//            sprintf(strtemp, "flag_times: %d\r\n", flag_times);     //一般大于100
+//            USART_DEBUG(strtemp);     //打印PC调试
             delay_ms(10);
             Motor_HuoDao_Stop(m, n);    //对应货道电机停转
             break;
@@ -192,7 +197,7 @@ u8 HUOWU_Take(u8 m, u8 n)
 #endif
             flag_PUTTHING = FALSE;      //清零
             Enable_EXTI = FALSE;     //关闭外部检测
-            USART_DEBUG("Diao huo\r\n");     //打印PC调试
+//            USART_DEBUG("Diao huo\r\n");     //打印PC调试
             break;
         }
 

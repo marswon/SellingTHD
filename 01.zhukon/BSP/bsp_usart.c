@@ -459,24 +459,25 @@ void BufWrite_COIN(u8 ntemp)
 #endif
 
 #if (HUOWU_Continue == 1)       //连续出货
-#define Continue_BUFFER_LEN     100
+#define Continue_BUFFER_LEN     200
 static u8 Continue_Wptr = 0;
 static u8 Continue_Rptr = 0;
 u8 Continue_Buffer[Continue_BUFFER_LEN] = {0};
 
 //功能：连续出货缓存发送的货架信息
 //说明：用在连续出货中，缓存对应货物的行列编号
-void Continue_BufferWrite(const u8 line, const u8 row)
+u8 Continue_BufferWrite(const u8 line, const u8 row)
 {
     if((Continue_Wptr + 2) % Continue_BUFFER_LEN == Continue_Rptr) // full
     {
-        return;
+        return 0;
     }
 
     Continue_Buffer[Continue_Wptr] = line;      //纪录行号
     Continue_Wptr = (Continue_Wptr + 1) % Continue_BUFFER_LEN;
     Continue_Buffer[Continue_Wptr] = row;      //纪录行号
     Continue_Wptr = (Continue_Wptr + 1) % Continue_BUFFER_LEN;
+    return 1;
 }
 
 //功能：读取缓存的货架信息
@@ -500,6 +501,7 @@ u8 Continue_BufferRead(u8* dat_line, u8* dat_row)
 void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
 {
     char str_dat[10] = {0};
+    u8 rev = 0;     //检验参数
     sprintf(strtemp, "Data: %04X\r\n", Data);
     USART_DEBUG(strtemp);
     memset(strtemp, 0, sizeof(strtemp));
@@ -548,9 +550,16 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             }
             else
             {
-                Continue_BufferWrite(str_dat[0], str_dat[1]);       //连续出货，用于缓存行列信息
+                rev = Continue_BufferWrite(str_dat[0], str_dat[1]);       //连续出货，用于缓存行列信息
+
+                if(rev == 0)
+                {
+                    USART_SendBytess(USART1, "quhuo error XIE\r\n");
+                }
             }
 
+            sprintf(strtemp, "W:%03d R:%03d\r\n", Continue_Wptr, Continue_Rptr);
+            USART_SendBytess(USART1, strtemp);      //打印调试信息
 #elif (HUOWU_Continue == 2)       //不连续出货
             Send_CMD_DAT(UART4, HBYTE(ZHUKON_DIANJI_HANGLIE), LBYTE(ZHUKON_DIANJI_HANGLIE), str_dat, 2);     //主控->电机，取货
             sprintf((char*)strtemp, "ZHUKON_DIANJI_HANGLIE: %04X,%d-%d\r\n", ZHUKON_DIANJI_HANGLIE, str_dat[0], str_dat[1]);
@@ -592,6 +601,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb1), LBYTE(ZHUKON_ANZHUO_NUMb1), str_dat, 2);       //发送指定行列出货成功
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb1:%04X\r\n", ZHUKON_ANZHUO_NUMb1);
             USART_DEBUG(strtemp);
+            sprintf(strtemp, "S_W:%03d S_R:%03d\r\n", Continue_Wptr, Continue_Rptr);
+            USART_SendBytess(USART1, strtemp);      //打印调试信息
 
             if(Continue_Wptr != Continue_Rptr)       //存在新写入的货架信息
             {
@@ -611,6 +622,8 @@ void Handle_USART_CMD(u16 Data, char *Dat, u16 dat_len)
             Send_CMD_DAT(USART3, HBYTE(ZHUKON_ANZHUO_NUMb2), LBYTE(ZHUKON_ANZHUO_NUMb2), str_dat, 2);       //发送指定行列出货失败
             sprintf(strtemp, "ZHUKON_ANZHUO_NUMb2:%04X\r\n", ZHUKON_ANZHUO_NUMb2);
             USART_DEBUG(strtemp);
+            sprintf(strtemp, "F_W:%03d F_R:%03d\r\n", Continue_Wptr, Continue_Rptr);
+            USART_SendBytess(USART1, strtemp);      //打印调试信息
 
             if(Continue_Wptr != Continue_Rptr)       //存在新写入的货架信息
             {
